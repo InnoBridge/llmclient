@@ -1,0 +1,60 @@
+{
+  "name": "@innobridge/llmclient",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/InnoBridge/llmclient.git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "version": "0.0.1",
+  "description": "A TypeScript library for LLM clients",
+  "author": "yilengyao <innobridgetechnology@gmail.com>",
+  "license": "InnoBridge",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc",
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "prepublishOnly": "npm run verify",
+    "test:integration": "npx tsx src/__tests__/integration/${npm_config_file:-*.test.ts}"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "dotenv": "^16.5.0",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.2"
+  },
+  "engines": {
+    "node": "^20.0.0 || >=22.0.0"
+  },
+  "dependencies": {
+    "path": "^0.12.7"
+  }
+}
