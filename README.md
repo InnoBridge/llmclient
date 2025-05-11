@@ -81,6 +81,11 @@ const completion = createCompletion({
 ```
 
 ## Streaming
+
+
+https://github.com/user-attachments/assets/0177ff2d-fa81-4a7a-9c1d-2f5f4e3b383e
+
+
 The official OpenAI JavaScript SDK supports streaming completions using Server-Sent Events (SSE), but this approach is not compatible with React Native environments because the network client used by OpenAI's SDK is not available in React Native.
 
 Challenge: React Native doesn't natively support the SSE network clients that are available in Node.js environments.
