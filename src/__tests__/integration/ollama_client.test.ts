@@ -17,7 +17,7 @@ const initializeClient = (): LlmClient => {
     console.error('Error initializing client:', error);
     throw error;
   }
-}
+};
 
 const getProviderTest = async (client: LlmClient) => {
   console.log('Starting getProvider test...');
@@ -34,7 +34,7 @@ const getProviderTest = async (client: LlmClient) => {
     console.error('getProvider test failed:', error);
     process.exit(1);
   }
-}
+};
 
 const getModelsTest = async (client: LlmClient) => {
   console.log('Starting getModels test...');
@@ -59,7 +59,7 @@ const getModelsTest = async (client: LlmClient) => {
     console.error('getModel test failed:', error);
     process.exit(1);
   }
-}
+};
 
 const getModelTest = async (client: LlmClient) => {
   console.log('Starting getModel test...');
@@ -80,7 +80,7 @@ const getModelTest = async (client: LlmClient) => {
   }
   console.log('model', model);
   console.log('getModel test completed successfully!');
-}
+};
 
 
 const createCompletionTest = async (client: LlmClient) => {
@@ -105,7 +105,7 @@ const createCompletionTest = async (client: LlmClient) => {
     console.error('Completion test failed:', error);
     process.exit(1);
   }
-}
+};
 
 const createCompletionStreamingTest = async (client: LlmClient) => {
   console.log('Creating completion streaming test...');
@@ -135,7 +135,7 @@ const createCompletionStreamingTest = async (client: LlmClient) => {
     console.error('Completion test failed:', error);
     process.exit(1);
   }
-}
+};
 
 // Wrap in an immediately invoked async function to use await
 (async function main() {
