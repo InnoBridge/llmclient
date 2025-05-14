@@ -1,5 +1,12 @@
 # LLM Client
 A multiplatform library (supports node and react native) for integrating LLM (Large Language Model) functionality into your applications. This library provides tools for managing chat conversations, caching messages, and communicating with LLM APIs.
+
+## Change Log
+| Version | Changes |
+|---------|---------|
+| v0.0.1 |  Chat management API andMessage caching with SQLite storage |
+
+
 ## Features
 - Message caching with SQLite storage
 - Chat management (create, rename, delete)
