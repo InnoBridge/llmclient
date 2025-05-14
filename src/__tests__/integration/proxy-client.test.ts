@@ -1,25 +1,32 @@
-import { LlmClient } from '@/client/llm_client';
-import OpenAIClient from '@/client/openai_client';
+import * as dotenv from 'dotenv';
+import path from 'path';
+import ProxyClient from '@/client/proxy_client';
+import { LlmProxyClient } from '@/client/llm_proxy_client';
 import { LlmProvider, OllamaConfiguration } from '@/configuration/llm_configurations';
 import { Role, ResponseObject } from '@/models/enums';
-import { ChatCompletion, CompletionMessage, CompletionChunk } from '@/models/response/chat_completion';
 import { Model } from '@/models/response/models';
+import { ChatCompletion, CompletionMessage, CompletionChunk } from '@/models/response/chat_completion';
 
-const initializeClient = (): LlmClient => {
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+const PROXY_URL = process.env.PROXY_URL;
+
+const initializeClient = (): LlmProxyClient => {
   try {
     const configuration: OllamaConfiguration =  {
       provider: LlmProvider.OLLAMA,
       baseURL: 'http://localhost:11434',
+      apiKey: 'ollama'
     };
-    const client = new OpenAIClient(configuration);
+    const client = new ProxyClient(PROXY_URL!, configuration);
     return client;
   } catch (error) {
     console.error('Error initializing client:', error);
     throw error;
   }
-}
+};
 
-const getProviderTest = async (client: LlmClient) => {
+const getProviderTest = async (client: LlmProxyClient) => {
   console.log('Starting getProvider test...');
   try {
     const provider = client.getProvider();
@@ -36,7 +43,8 @@ const getProviderTest = async (client: LlmClient) => {
   }
 }
 
-const getModelsTest = async (client: LlmClient) => {
+
+const getModelsTest = async (client: LlmProxyClient) => {
   console.log('Starting getModels test...');
   
   try {    
@@ -59,55 +67,54 @@ const getModelsTest = async (client: LlmClient) => {
     console.error('getModel test failed:', error);
     process.exit(1);
   }
-}
+};
 
-const getModelTest = async (client: LlmClient) => {
-  console.log('Starting getModel test...');
-  let model = client.getModel();
-  if (model !== null) {
-    throw new Error('Model should be null before setting a model');
-  }
-  const qwen3Model: Model = {
-    id: 'qwen3:8b',
-    created: 1699999999999,
-    object: ResponseObject.MODEL,
-    owned_by: 'ollama',
-  }
-  client.setModel(qwen3Model);
-  model = client.getModel();
-  if (model !== qwen3Model) {
-    throw new Error('Model should be equal to the set model');
-  }
-  console.log('model', model);
-  console.log('getModel test completed successfully!');
-}
+const getModelTest = async (client: LlmProxyClient) => {
+    console.log('Starting getModel test...');
+    let model = client.getModel();
+    if (model !== null) {
+      throw new Error('Model should be null before setting a model');
+    }
+    const qwen3Model: Model = {
+      id: 'qwen3:8b',
+      created: 1699999999999,
+      object: ResponseObject.MODEL,
+      owned_by: 'ollama',
+    }
+    client.setModel(qwen3Model);
+    model = client.getModel();
+    if (model !== qwen3Model) {
+      throw new Error('Model should be equal to the set model');
+    }
+    console.log('model', model);
+    console.log('getModel test completed successfully!');
+};
 
-
-const createCompletionTest = async (client: LlmClient) => {
-  console.log('Creating completion test...');
-  
-  try {    
-    const response = await client.createCompletion({
-      model: "qwen3:8b",
-      messages: [
-        {
-          role: Role.USER,
-          content: 'Hello, how are you today?'
-        }
-      ]
-    });
+const createCompletionTest = async (client: LlmProxyClient) => {
+    console.log('Creating completion test...');
     
-    console.log('Response:', response);
-    console.log('Message ', (response.choices[0] as CompletionMessage).message);
+    try {    
+      const response = await client.createCompletion({
+        model: "qwen3:8b",
+        messages: [
+          {
+            role: Role.USER,
+            content: 'Hello, how are you today?'
+          }
+        ]
+      });
+      
+      console.log('Response:', response);
+      console.log('Message ', (response.choices[0] as CompletionMessage).message);
+  
+      console.log('Completion test completed successfully!');
+    } catch (error) {
+      console.error('Completion test failed:', error);
+      process.exit(1);
+    }
+};
 
-    console.log('Completion test completed successfully!');
-  } catch (error) {
-    console.error('Completion test failed:', error);
-    process.exit(1);
-  }
-}
-
-const createCompletionStreamingTest = async (client: LlmClient) => {
+const createCompletionStreamingTest = async (client: LlmProxyClient) => {
   console.log('Creating completion streaming test...');
   const listener = (completions: Array<ChatCompletion>) => {
     let streamedResponse = '';
@@ -135,24 +142,24 @@ const createCompletionStreamingTest = async (client: LlmClient) => {
     console.error('Completion test failed:', error);
     process.exit(1);
   }
-}
+};
 
 // Wrap in an immediately invoked async function to use await
 (async function main() {
-  try {
-      // sync test
-      const client = initializeClient();
-
-      // promise tests in order
-      await getProviderTest(client);
-      await getModelsTest(client);
-      await getModelTest(client);
-      await createCompletionTest(client);
-      await createCompletionStreamingTest(client);
-
-      console.log("🎉 All integration tests passed");
-  } catch (err) {
-      console.error("❌ Integration tests failed:", err);
-      process.exit(1);
-  }
-})();
+    try {
+        // sync test
+        const client = initializeClient();
+  
+        // promise tests in order
+        await getProviderTest(client);
+        await getModelsTest(client);
+        await getModelTest(client);
+        await createCompletionTest(client);
+        await createCompletionStreamingTest(client);
+  
+        console.log("🎉 All integration tests passed");
+    } catch (err) {
+        console.error("❌ Integration tests failed:", err);
+        process.exit(1);
+    }
+  })();

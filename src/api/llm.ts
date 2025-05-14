@@ -134,7 +134,7 @@ const getCachedModels = (): Model[] | null => {
         throw new Error("LLM client not initialized. Call createLlmClient first.");
     }
     return llmClient.getCachedModels();
-}
+};
 
 /**
  * @description Retrieves the current model from the LLM client
@@ -146,7 +146,7 @@ const getModel = (): Model | null => {
         throw new Error("LLM client not initialized. Call createLlmClient first.");
     }
     return llmClient.getModel();
-}
+};
 
 /**
  * @description Sets the current model in the LLM client
@@ -239,7 +239,7 @@ const generateImage = async (request: GenerateImageRequest): Promise<ImageRespon
     }
 
     return llmClient.generateImage(request);
-}
+};
 
 export {
     getLlmProviders,

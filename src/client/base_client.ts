@@ -14,10 +14,9 @@ const getModels = async (baseUrl: string, headers:  Record<string, string>): Pro
             method: 'GET',
             headers: headers
         });
-        
         if (!response.ok) {
             const errJson = await response.json();
-            throw new Error(`HTTP error! status: ${errJson.error.message}`);            }
+            throw new Error(`HTTP error! status: ${errJson.error}`);            }
         
         const data = await response.json();
         return data as Models;
@@ -37,10 +36,10 @@ const createCompletionNonStreaming = async (
                 headers: headers,
                 body: JSON.stringify(request)
             });
-            
+                        
             if (!response.ok) {
                 const errJson = await response.json();
-                throw new Error(`HTTP error! status: ${errJson.error.message}`);
+                throw new Error(`HTTP error! status: ${errJson.error}`);
             }
             
             const data = await response.json();
@@ -65,7 +64,7 @@ const createCompletionStreaming = async (
 
             if (!response.ok) {
                 const errJson = await response.json();
-                throw new Error(`HTTP error! status: ${errJson.error.message}`);
+                throw new Error(`HTTP error! status: ${errJson.error}`);
             }
 
             const body = response.body as ReadableStream<Uint8Array>;
@@ -108,7 +107,7 @@ const reactNativeStreamingCompletion = async (
 
         if (!response.ok) {
             const errJson = await response.json();
-            throw new Error(`HTTP error! status: ${errJson.error.message}`);
+            throw new Error(`HTTP error! status: ${errJson}`);
         }
 
         const body = response.body as ReadableStream<Uint8Array>;
@@ -148,13 +147,13 @@ const generateImage = async (
         
         if (!response.ok) {
             const errJson = await response.json();
-            throw new Error(`HTTP error! status: ${errJson.error.message}`);
+            throw new Error(`HTTP error! status: ${errJson.error}`);
         }
         
         const data = await response.json();
         return data as ImageResponse;
     } catch (error: any) {
-        console.error('Error generating image:', error.message);
+        console.error('Error generating image:', error);
         throw error;
     }
 }
