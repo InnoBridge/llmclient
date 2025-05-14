@@ -1,11 +1,11 @@
-import { LlmClient } from "@/client/llm_client";
+import { LlmProxyClient } from "@/client/llm_proxy_client";
 import { 
     LlmProvider,
     LlmConfiguration,
     OllamaConfiguration,
     OpenAIConfiguration
 } from "@/configuration/llm_configurations";
-import OpenAIClient from "@/client/openai_client";
+import ProxyClient from "@/client/proxy_client";
 import { Model, Models } from "@/models/response/models";
 import { ChatCompletion } from "@/models/response/chat_completion";
 import { ChatRequest } from "@/models/request/chat_request";
@@ -14,7 +14,7 @@ import { ImageResponse } from "@/models/response/image_response";
 
 type FetchImplementation = typeof fetch;
 
-let llmClient: LlmClient | null = null;
+let llmClient: LlmProxyClient | null = null;
 
 /**
  * @description Retrieves the available LLM providers
@@ -71,7 +71,7 @@ const validateConfiguration = (configuration: LlmConfiguration): void => {
  * @throws Will throw an error if the configuration is invalid or if the client cannot be created
  * @returns {Promise<void>} - A promise that resolves when the client is created
  */
-const createLlmClient = async (configuration: LlmConfiguration) => {
+const createLlmClient = async (proxyUrl: string, configuration: LlmConfiguration) => {
     // Validate the configuration before creating the client
     validateConfiguration(configuration);
 
@@ -79,8 +79,8 @@ const createLlmClient = async (configuration: LlmConfiguration) => {
     switch (configuration.provider) {
         case LlmProvider.OLLAMA:
         case LlmProvider.OPENAI:
-            llmClient = new OpenAIClient(configuration);
-            break;
+            llmClient = new ProxyClient(proxyUrl, configuration);
+           break;
         default:
             llmClient = null;
             throw new Error(`Unsupported LLM provider: ${configuration.provider}`);
@@ -117,11 +117,11 @@ const clearLlmClient = (): void => {
  * @returns {Promise<string[]>} - A promise that resolves to an array of model names
  * @throws Will throw an error if the client is not initialized or if fetching models fails
  */
-const getModels = async (): Promise<Models> => {
+const getModels = async (jwt?: string): Promise<Models> => {
     if (!llmClient) {
         throw new Error("LLM client not initialized. Call createLlmClient first.");
     }
-    return (await llmClient.getModels());
+    return (await llmClient.getModels(jwt));
 };
 
 /**
@@ -146,7 +146,7 @@ const getModel = (): Model | null => {
         throw new Error("LLM client not initialized. Call createLlmClient first.");
     }
     return llmClient.getModel();
-}
+};
 
 /**
  * @description Sets the current model in the LLM client
@@ -181,7 +181,10 @@ const setModel = async (model: Model): Promise<void> => {
 };
 
 
-const createCompletion = async (request: ChatRequest, chatListener?: (completions: Array<ChatCompletion>) => void): Promise<ChatCompletion> => {
+const createCompletion = async (
+    request: ChatRequest, 
+    chatListener?: (completions: Array<ChatCompletion>) => void, 
+    jwt?: string): Promise<ChatCompletion> => {
     if (!llmClient) {
         throw new Error("LLM client not initialized. Call createLlmClient first.");
     }
@@ -195,13 +198,14 @@ const createCompletion = async (request: ChatRequest, chatListener?: (completion
         request.model = current.id;
     }
 
-    return llmClient.createCompletion(request, chatListener);
+    return llmClient.createCompletion(request, chatListener, jwt);
 };
 
 const reactNativeStreamingCompletion = async (
     request: ChatRequest,
     customFetch: FetchImplementation,
-    chatListener?: (completions: Array<ChatCompletion>) => void): Promise<ChatCompletion> => {
+    chatListener?: (completions: Array<ChatCompletion>) => void,
+    jwt?: string): Promise<ChatCompletion> => {
 
     if (!llmClient) {
         throw new Error("LLM client not initialized. Call createLlmClient first.");
@@ -216,7 +220,7 @@ const reactNativeStreamingCompletion = async (
         request.model = current.id;
     }
 
-    return llmClient.reactNativeStreamingCompletion(request, customFetch, chatListener);
+    return llmClient.reactNativeStreamingCompletion(request, customFetch, chatListener, jwt);
 };
 
 /**
@@ -225,7 +229,7 @@ const reactNativeStreamingCompletion = async (
  * If the provider is not OPENAI, an error will be thrown.
  * 
  */
-const generateImage = async (request: GenerateImageRequest): Promise<ImageResponse> => {
+const generateImage = async (request: GenerateImageRequest, jwt?: string): Promise<ImageResponse> => {
     if (!llmClient) {
         throw new Error("LLM client not initialized. Call createLlmClient first.");
     }
@@ -238,8 +242,8 @@ const generateImage = async (request: GenerateImageRequest): Promise<ImageRespon
         request.model = current.id;
     }
 
-    return llmClient.generateImage(request);
-}
+    return llmClient.generateImage(request, jwt);
+};
 
 export {
     getLlmProviders,

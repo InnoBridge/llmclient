@@ -15,11 +15,11 @@ import {
     reactNativeStreamingCompletion,
     generateImage
 } from "@/client/base_client";
-import { LlmProxyClient } from "./llm_proxy_client";
+import { LlmClient } from "@/client/llm_client";
 
 type FetchImplementation = typeof fetch;
 
-class ProxyClient implements LlmProxyClient {
+class ProxyClient implements LlmClient {
     private model: Model | null = null;
     private models: Model[] | null = null;
     private provider: LlmProvider;
