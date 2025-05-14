@@ -1,5 +1,6 @@
 import * as configuration from '@/configuration/llm_configurations'
 import * as api from '@/api/llm';
+import * as proxyApi from '@/api/proxy_llm';
 import * as messageCache from '@/api/message_cache';
 import * as model from '@/models/response/models';
 import * as chatRequest from '@/models/request/chat_request';
@@ -21,6 +22,7 @@ import * as databaseClient from '@/storage/cache/database_client';
 export { 
     configuration,
     api,
+    proxyApi,
     messageCache,
     model,
     chatRequest,

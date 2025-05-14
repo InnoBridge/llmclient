@@ -9,20 +9,19 @@ interface ResponseFormatJSONObject {
 };
 
 interface ResponseFormatJSONSchema {
-    json_schema: ResponseFormatNamespace.JSONSchema;
+    json_schema: JSONSchema;
     type: ResponseFormat.JSON_SCHEMA;
 };
 
-export namespace ResponseFormatNamespace {
-    export interface JSONSchema {
+interface JSONSchema {
         name: string;
         description?: string;
         schema?: Record<string, unknown>;
         strict?: boolean | null;
-    };
 };
 
 export {
+    JSONSchema,
     ResponseFormatText,
     ResponseFormatJSONObject,
     ResponseFormatJSONSchema

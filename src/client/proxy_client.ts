@@ -1,4 +1,3 @@
-import { LlmClient } from "@/client/llm_client";
 import { 
     OllamaConfiguration, 
     OpenAIConfiguration,
@@ -16,30 +15,35 @@ import {
     reactNativeStreamingCompletion,
     generateImage
 } from "@/client/base_client";
+import { LlmClient } from "@/client/llm_client";
 
 type FetchImplementation = typeof fetch;
 
-class OpenAIClient implements LlmClient {
+class ProxyClient implements LlmClient {
     private model: Model | null = null;
     private models: Model[] | null = null;
     private provider: LlmProvider;
     protected apiKey: string;
     protected baseUrl: string = 'https://api.openai.com';
+    protected proxyUrl: string;
     protected headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
-    constructor( 
-        configuration: OllamaConfiguration | OpenAIConfiguration,
+    constructor(
+        proxyUrl: string,
+        configuration: OllamaConfiguration | OpenAIConfiguration
     ) {
         if (!configuration.provider) {
             throw new Error("Provider is required in configuration");
         }
         this.provider = configuration.provider;
+        this.proxyUrl = proxyUrl;
         if (this.provider === LlmProvider.OLLAMA) {
             const ollamaConfig = configuration as OllamaConfiguration;
             this.baseUrl = ollamaConfig.baseURL || 'http://localhost:11434';
         }
         this.apiKey = configuration.apiKey || '';
-        this.headers['Authorization'] = `Bearer ${this.apiKey}`;
+        this.headers['x-llm-api-key'] = this.apiKey;
+        this.headers['x-llm-base-url'] = this.baseUrl;
     }
 
     getProvider(): LlmProvider {
@@ -50,8 +54,12 @@ class OpenAIClient implements LlmClient {
         return this.models;
     }
 
-    async getModels(): Promise<Models> {
-        const models = await getModels(this.baseUrl, this.headers);
+    async getModels(jwt?: string): Promise<Models> {
+        const headers = { ...this.headers };
+        if (jwt) {
+            headers['Authorization'] = `Bearer ${jwt}`;
+        }
+        const models = await getModels(this.proxyUrl, headers);
         this.models = models.data;
         return models;
     }
@@ -63,46 +71,68 @@ class OpenAIClient implements LlmClient {
     setModel(model: Model): void {  
         this.model = model;
     }
-    
-    async createCompletion(request: ChatRequest, chatListener?: (completions: Array<ChatCompletion>) => void): Promise<ChatCompletion> {
+
+    async createCompletion(
+        request: ChatRequest, 
+        chatListener?: (completions: Array<ChatCompletion>) => void,
+        jwt?: string
+    ): Promise<ChatCompletion> {
         if (request.stream) {
-            return this.createCompletionStreaming(request, chatListener);
+            return this.createCompletionStreaming(request, chatListener, jwt);
         } else {
-            return this.createCompletionNonStreaming(request);
+            return this.createCompletionNonStreaming(request, jwt);
         }
     }
 
-    async createCompletionNonStreaming(request: ChatRequest): Promise<ChatCompletion> {
-        return createCompletionNonStreaming(this.baseUrl, this.headers, request);
+    async createCompletionNonStreaming(request: ChatRequest, jwt?: string): Promise<ChatCompletion> {
+        const headers = { ...this.headers };
+        if (jwt) {
+            headers['Authorization'] = `Bearer ${jwt}`;
+        }
+        return createCompletionNonStreaming(this.proxyUrl, headers, request);
     }
 
     async createCompletionStreaming(
         request: ChatRequest, 
-        chatListener?: (completions: Array<ChatCompletion>) => void): Promise<ChatCompletion> {
-        return createCompletionStreaming(this.baseUrl, this.headers, request, chatListener);
+        chatListener?: (completions: Array<ChatCompletion>) => void,
+        jwt?: string
+    ): Promise<ChatCompletion> {
+        const headers = { ...this.headers };
+        if (jwt) {
+            headers['Authorization'] = `Bearer ${jwt}`;
+        }
+        return createCompletionStreaming(this.proxyUrl, headers, request, chatListener);
     }
 
     async reactNativeStreamingCompletion(
         request: ChatRequest, 
         customFetch: FetchImplementation,
-        chatListener?: (completions: Array<ChatCompletion>) => void    
+        chatListener?: (completions: Array<ChatCompletion>) => void,
+        jwt?: string
     ): Promise<ChatCompletion> {
-        return reactNativeStreamingCompletion(this.baseUrl, this.headers, request, customFetch, chatListener);
+        const headers = { ...this.headers };
+        if (jwt) {
+            headers['Authorization'] = `Bearer ${jwt}`;
+        }
+        return reactNativeStreamingCompletion(this.proxyUrl, headers, request, customFetch, chatListener);
     }
 
-   /**
+    /**
      * Generates an image based on the provided request.
      * 
      * Note: This method currently supports only the OPENAI provider.
      * If the provider is not OPENAI, an error will be thrown.
      */
-    async generateImage(request: GenerateImageRequest): Promise<ImageResponse> {
+    async generateImage(request: GenerateImageRequest, jwt?: string): Promise<ImageResponse> {
         if (this.provider !== LlmProvider.OPENAI) {
             throw new Error(`${this.provider} is the only provider that supports image generation.`);
         }
-        return generateImage(this.baseUrl, this.headers, request);
+        const headers = { ...this.headers };
+        if (jwt) {
+            headers['Authorization'] = `Bearer ${jwt}`;
+        }
+        return generateImage(this.proxyUrl, headers, request);
     };
-
 }
 
-export default OpenAIClient;
+export default ProxyClient;

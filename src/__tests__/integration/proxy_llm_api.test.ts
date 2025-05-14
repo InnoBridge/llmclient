@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+import path from 'path';
 import {
     getLlmProviders,
     getLlmProvider,
@@ -8,7 +10,7 @@ import {
     clearLlmClient,
     setModel,
     createCompletion
-} from "@/api/llm";
+} from "@/api/proxy_llm";
 import { 
     LlmProvider, 
     OllamaConfiguration 
@@ -17,12 +19,17 @@ import { Role } from "@/models/enums";
 import { ChatRequest } from "@/models/request/chat_request";
 import { CompletionMessage, ChatCompletion, CompletionChunk } from "@/models/response/chat_completion";
 
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+const PROXY_URL = process.env.PROXY_URL;
+
 const initializeLlmClient = async () => {
     const configuration: OllamaConfiguration =  {
         provider: LlmProvider.OLLAMA,
         baseURL: 'http://localhost:11434',
+        apiKey: 'ollama'
     };
-    await createLlmClient(configuration);
+    await createLlmClient(PROXY_URL!, configuration);
 };
 
 const getLlmProvidersTest = () => {
@@ -53,6 +60,7 @@ const getLlmProviderTest = async () => {
     console.log('getLlmProvider test completed successfully!');
     clearLlmClient();
 };
+
 
 const createLlmClientText = async () => {
     console.log('Starting createLlmClient test...');
