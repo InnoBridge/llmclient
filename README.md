@@ -4,7 +4,7 @@ A multiplatform library (supports node and react native) for integrating LLM (La
 ## Change Log
 | Version | Changes |
 |---------|---------|
-| 0.1.0 | Feature: Added proxy client and API for secure backend communication<ul><li>JWT authentication support for all API methods</li><li>Custom header forwarding (x-llm-api-key, x-llm-base-url)</li><li>Server-side API key protection</li><li>Transparent request routing through backend proxy</li></ul>|
+| 0.1.1 | Feature: Added proxy client and API for secure backend communication<ul><li>JWT authentication support for all API methods</li><li>Custom header forwarding (x-llm-api-key, x-llm-base-url)</li><li>Server-side API key protection</li><li>Transparent request routing through backend proxy</li></ul>|
 | 0.0.1 | Initial Release: Core functionality<ul><li>Chat management API (create, rename, delete conversations)</li><li>Message caching with SQLite storage</li><li>Direct OpenAI and Ollama provider integration</li><li>React Native streaming compatibility</li></ul> |
 
 
