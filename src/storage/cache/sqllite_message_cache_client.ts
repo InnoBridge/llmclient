@@ -65,33 +65,64 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
                 await this.execAsync('PRAGMA journal_mode = "wal";');
                 await this.execAsync('PRAGMA foreign_keys = ON;');
                 
+                // Get current database version
+                let result = await this.db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
+                let currentDbVersion = result?.user_version ?? 0;
+
                 // THEN begin transaction for schema creation
                 await this.beginTransaction();
 
-                // Create chats table with timestamp
-                await this.createChatsTable();
-                
-                // Create messages table with timestamp
-                await this.createMessagesTable();
-                
-                // Create indexes for better performance
-                await this.execAsync('CREATE INDEX idx_messages_chat_id ON messages(chat_id);');
-                await this.execAsync('CREATE INDEX idx_messages_role ON messages(role);');
-                
-                // Commit the transaction
-                await this.commitTransaction();
-                console.log("Database schema created successfully");
-                
-                currentDbVersion = 1;
+                try {
+                    // Migration state machine - each case falls through to the next
+                    switch (currentDbVersion) {
+                        case 0:
+                            console.log('Initializing database (version 1)');
+                            
+                            // Create chats table with timestamp
+                            await this.createChatsTable();
+                            
+                            // Create messages table with timestamp
+                            await this.createMessagesTable();
+                            
+                            // Create indexes for better performance
+                            await this.execAsync('CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);');
+                            await this.execAsync('CREATE INDEX IF NOT EXISTS idx_messages_role ON messages(role);');
+                            
+                            // Update version after schema v1 is complete
+                            currentDbVersion = 1;
+                            
+                        case 1:
+                            // Next migration would go here
+                            // Example:
+                            // console.log('Upgrading to version 2');
+                            // await this.execAsync('ALTER TABLE messages ADD COLUMN metadata TEXT;');
+                            // currentDbVersion = 2;
+                            
+                        case 2:
+                            // Another future migration...
+                            
+                        default:
+                            console.log(`Database schema is at version ${currentDbVersion}`);
+                    }
+
+                    // Set the final version in SQLite
+                    await this.execAsync(`PRAGMA user_version = ${currentDbVersion}`);
+                    
+                    // Commit all migrations
+                    await this.commitTransaction();
+                    console.log("Database migrations completed successfully");
+                    
+                } catch (error) {
+                    // Rollback on any error
+                    await this.rollbackTransaction();
+                    console.error("Database migration failed:", error);
+                    throw error;
+                }
             } catch (error) {
-                // Rollback on any error
-                await this.rollbackTransaction();
-                console.error("Database migration failed:", error);
+                console.error("Database initialization failed:", error);
                 throw error;
             }
         }
-
-        await this.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
     }
 
     async addChat(title: string, userId?: string): Promise<SQLiteRunResult> {

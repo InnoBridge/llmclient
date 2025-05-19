@@ -10,7 +10,8 @@ const CREATE_CHATS_TABLE_QUERY =
         userId INTEGER,
         title TEXT NOT NULL,
         created_at INTEGER DEFAULT (unixepoch()),
-        updated_at INTEGER DEFAULT (unixepoch())
+        updated_at INTEGER DEFAULT (unixepoch()),
+        deleted_at  INTEGER DEFAULT NULL
     );`;
 
 const CREATE_MESSAGES_TABLE_QUERY =
@@ -22,6 +23,7 @@ const CREATE_MESSAGES_TABLE_QUERY =
         role TEXT NOT NULL,
         prompt TEXT,
         created_at INTEGER DEFAULT (unixepoch()),
+        is_synced   INTEGER DEFAULT 0,
         FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
     );`;
 
