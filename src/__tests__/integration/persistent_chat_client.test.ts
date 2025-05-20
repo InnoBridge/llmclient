@@ -6,11 +6,11 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
+const PROXY_URL = process.env.PROXY_URL || 'http://localhost:3000';
 
 const initializeClient = (): ChatClient => {
   try {
-    const client = new PersistentChatClient(BACKEND_URL!);
+    const client = new PersistentChatClient(PROXY_URL!);
     return client;
   } catch (error) {
     console.error('Error initializing client:', error);

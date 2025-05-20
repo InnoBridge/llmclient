@@ -213,8 +213,8 @@ await initializeMessageCache(dbAdapter);
 
 usage
 ```typescript
-import { messageCache } from "@innobridge/llmclient";
-const { getChats, renameChat, deleteChat } = messageCache;
+import { cachedChatsApi } from "@innobridge/llmclient";
+const { getChats, renameChat, deleteChat } = CachedChatsApi;
 ...
 const result = (await getChats()) as Chat[];
 await renameChat(chatId, newName);

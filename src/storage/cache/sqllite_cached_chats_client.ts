@@ -1,4 +1,4 @@
-import { MessageCacheClient } from "@/storage/cache/message_cache_client";
+import { CachedChatsClient } from "@/storage/cache/cached_chats_client";
 import { SQLiteRunResult } from "@/models/sqllite";
 import { SqlLiteClient } from "@/storage/cache/database_client";
 import {
@@ -14,7 +14,7 @@ import {
     CLEAR_CHAT_QUERY
 } from "@/storage/queries";
 
-class SqlLiteMessageCacheClient implements MessageCacheClient {
+class SqlLiteCachedChatsClient implements CachedChatsClient {
     private db: SqlLiteClient;
     
     constructor(db: SqlLiteClient) {
@@ -204,5 +204,5 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
 };
 
 export {
-    SqlLiteMessageCacheClient
+    SqlLiteCachedChatsClient
 };

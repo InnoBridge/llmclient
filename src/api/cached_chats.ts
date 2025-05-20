@@ -1,12 +1,12 @@
-import { MessageCacheClient } from "@/storage/cache/message_cache_client";
-import { SqlLiteMessageCacheClient } from "@/storage/cache/sqllite_message_cache_client";
+import { CachedChatsClient } from "@/storage/cache/cached_chats_client";
+import { SqlLiteCachedChatsClient } from "@/storage/cache/sqllite_cached_chats_client";
 import { SqlLiteClient } from "@/storage/cache/database_client";
 import { SQLiteRunResult } from "@/models/sqllite";
 
-let cacheClient: MessageCacheClient | null = null;
+let cacheClient: CachedChatsClient | null = null;
 
 const initializeMessageCache = async (db: SqlLiteClient): Promise<void> => {
-    cacheClient = new SqlLiteMessageCacheClient(db);
+    cacheClient = new SqlLiteCachedChatsClient(db);
     await cacheClient.initializeCache();
 };
 

@@ -1,6 +1,6 @@
 import { SQLiteRunResult } from "@/models/sqllite";
 
-interface MessageCacheClient {
+interface CachedChatsClient {
     execAsync(query: string): Promise<void>;
     runAsync(query: string, params?: any[]): Promise<SQLiteRunResult>;
     getAllAsync<T>(query: string, params?: any[]): Promise<T[]>;
@@ -25,6 +25,6 @@ interface MessageCacheClient {
 };
 
 export type {
-    MessageCacheClient,
+    CachedChatsClient,
 };
 
