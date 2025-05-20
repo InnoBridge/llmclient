@@ -16,9 +16,22 @@ import {
 
 class SqlLiteCachedChatsClient implements CachedChatsClient {
     private db: SqlLiteClient;
+    private migrations: Map<number, () => Promise<void>> = new Map();
     
     constructor(db: SqlLiteClient) {
         this.db = db;
+
+        this.registerMigration(0, async () => {
+            // Create chats table with timestamp
+            await this.createChatsTable();
+            
+            // Create messages table with timestamp
+            await this.createMessagesTable();
+            
+            // Create indexes for better performance
+            await this.execAsync('CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);');
+            await this.execAsync('CREATE INDEX IF NOT EXISTS idx_messages_role ON messages(role);');
+        });
     }
 
     async execAsync(query: string): Promise<void> {
@@ -53,60 +66,37 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         return await this.execAsync(CREATE_MESSAGES_TABLE_QUERY);
     };
 
+    // Public method to register migrations
+    registerMigration(fromVersion: number, migrationFn: () => Promise<void>): void {
+        this.migrations.set(fromVersion, migrationFn);
+    }
+
     async initializeCache(): Promise<void> {
-        const DATABASE_VERSION = 1;
         let result = await this.db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
         let currentDbVersion = result?.user_version ?? 0;
 
-
-        if (currentDbVersion === 0) {
+        if (currentDbVersion < this.getHighestMigrationVersion()) {
             try {            
                 // Set SQLite mode and enable foreign keys
                 await this.execAsync('PRAGMA journal_mode = "wal";');
                 await this.execAsync('PRAGMA foreign_keys = ON;');
                 
-                // Get current database version
-                let result = await this.db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
-                let currentDbVersion = result?.user_version ?? 0;
-
                 // THEN begin transaction for schema creation
                 await this.beginTransaction();
 
                 try {
-                    // Migration state machine - each case falls through to the next
-                    switch (currentDbVersion) {
-                        case 0:
-                            console.log('Initializing database (version 1)');
-                            
-                            // Create chats table with timestamp
-                            await this.createChatsTable();
-                            
-                            // Create messages table with timestamp
-                            await this.createMessagesTable();
-                            
-                            // Create indexes for better performance
-                            await this.execAsync('CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);');
-                            await this.execAsync('CREATE INDEX IF NOT EXISTS idx_messages_role ON messages(role);');
-                            
-                            // Update version after schema v1 is complete
-                            currentDbVersion = 1;
-                            
-                        case 1:
-                            // Next migration would go here
-                            // Example:
-                            // console.log('Upgrading to version 2');
-                            // await this.execAsync('ALTER TABLE messages ADD COLUMN metadata TEXT;');
-                            // currentDbVersion = 2;
-                            
-                        case 2:
-                            // Another future migration...
-                            
-                        default:
-                            console.log(`Database schema is at version ${currentDbVersion}`);
+                    // Apply migrations in order
+                    while (this.migrations.has(currentDbVersion)) {
+                        console.log(`Upgrading from version ${currentDbVersion} to ${currentDbVersion + 1}`);
+                        const migration = this.migrations.get(currentDbVersion);
+                        await migration!();
+                        currentDbVersion++;
+                        
+                        // Update the version after each successful migration
+                        await this.execAsync(`PRAGMA user_version = ${currentDbVersion}`);
                     }
-
-                    // Set the final version in SQLite
-                    await this.execAsync(`PRAGMA user_version = ${currentDbVersion}`);
+                    
+                    console.log(`Database schema is at version ${currentDbVersion}`);
                     
                     // Commit all migrations
                     await this.commitTransaction();
@@ -123,6 +113,11 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
                 throw error;
             }
         }
+    }
+
+    // Helper method to get the highest migration version
+    private getHighestMigrationVersion(): number {
+        return Math.max(-1, ...Array.from(this.migrations.keys())) + 1;
     }
 
     async addChat(title: string, userId?: string): Promise<SQLiteRunResult> {

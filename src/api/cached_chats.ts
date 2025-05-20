@@ -10,9 +10,16 @@ const initializeMessageCache = async (db: SqlLiteClient): Promise<void> => {
     await cacheClient.initializeCache();
 };
 
+const registerMigration = (version: number, migration: () => Promise<void>) => {
+    if (!isCacheClientSet()) {
+        throw new Error("Message cache not initialized. Call initializeMessageCache first.");
+    }
+    cacheClient?.registerMigration(version, migration);
+};
+
 const isCacheClientSet = (): boolean => {
     return cacheClient !== null;
-}
+};
 
 const execAsync = async (query: string): Promise<void> => {
     if (!isCacheClientSet()) {
@@ -133,6 +140,7 @@ const clearChat = async (): Promise<void> => {
 
 export {
     initializeMessageCache,
+    registerMigration,
     execAsync,
     runAsync,
     getAllAsync,

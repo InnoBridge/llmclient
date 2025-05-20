@@ -8,6 +8,7 @@ interface CachedChatsClient {
     commitTransaction(): Promise<void>;
     rollbackTransaction(): Promise<void>;
     initializeCache(): Promise<void>;
+    registerMigration(version: number, migration: () => Promise<void>): void;
     addChat(title: string, userId?: string): Promise<SQLiteRunResult>;
     getChats<T>(): Promise<T[]>;
     getMessages<T>(chatId: number): Promise<T[]>;
