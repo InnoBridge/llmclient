@@ -1,7 +1,7 @@
 import { PaginatedResult } from '@/models/pagination';
 import { Chat, Message } from '@/models/storage/dto';
 
-interface MessageClient {
+interface ChatClient {
     // Chat operations
     getChatsByUserId<T>(
         userId: string, 
@@ -23,5 +23,5 @@ interface MessageClient {
 };
 
 export type {
-    MessageClient,
+    ChatClient,
 };

@@ -1,8 +1,8 @@
 import { PaginatedResult } from '@/models/pagination';
 import { Chat, Message } from '@/models/storage/dto';
-import { MessageClient } from '@/storage/client/message_client';
+import { ChatClient } from '@/storage/client/chat_client';
 
-class PersistentMessageClient implements MessageClient {
+class PersistentChatClient implements ChatClient {
     protected baseUrl: string;
     protected headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
@@ -239,6 +239,6 @@ class PersistentMessageClient implements MessageClient {
 }
 
 export {
-    PersistentMessageClient
+    PersistentChatClient
 }
 

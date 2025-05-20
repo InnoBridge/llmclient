@@ -1,6 +1,6 @@
 import { Chat, Message } from '@/models/storage/dto';
-import { MessageClient } from '@/storage/client/message_client';
-import { PersistentMessageClient } from '@/storage/client/persistent_message_client';
+import { ChatClient } from '@/storage/client/chat_client';
+import { PersistentChatClient } from '@/storage/client/persistent_chat_client';
 import * as dotenv from 'dotenv';
 import path from 'path';
 
@@ -8,9 +8,9 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
-const initializeClient = (): MessageClient => {
+const initializeClient = (): ChatClient => {
   try {
-    const client = new PersistentMessageClient(BACKEND_URL!);
+    const client = new PersistentChatClient(BACKEND_URL!);
     return client;
   } catch (error) {
     console.error('Error initializing client:', error);
@@ -18,7 +18,7 @@ const initializeClient = (): MessageClient => {
   }
 };
 
-const addChatTest = async (client: MessageClient) => {
+const addChatTest = async (client: ChatClient) => {
     console.log('Starting addChat test...');
     const chat = {
         chatId: 1,
@@ -41,7 +41,7 @@ const addChatTest = async (client: MessageClient) => {
     }
 };
 
-const addChatsAndPaginatedGetChatsByUserIdTest = async (client: MessageClient) => {
+const addChatsAndPaginatedGetChatsByUserIdTest = async (client: ChatClient) => {
     console.log('Starting addChatsAndPaginatedGetChatsByUserId test...');
     const chats = [
         {
@@ -109,7 +109,7 @@ const addChatsAndPaginatedGetChatsByUserIdTest = async (client: MessageClient) =
     }
 };
 
-const syncChatsTest = async (client: MessageClient) => {
+const syncChatsTest = async (client: ChatClient) => {
     console.log('Starting syncChats test...');
     const chats = [
         {
@@ -201,7 +201,7 @@ const syncChatsTest = async (client: MessageClient) => {
     }
 }
 
-const addMessageTest = async (client: MessageClient) => {
+const addMessageTest = async (client: ChatClient) => {
     console.log('Starting addMessages test...');
     const chat = {
         chatId: 1,
@@ -235,7 +235,7 @@ const addMessageTest = async (client: MessageClient) => {
     }
 };
 
-const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: MessageClient) => {
+const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient) => {
     console.log('Starting addMessagesAndPaginatedGetMessagesByUserId test...');
     const chat = {
         chatId: 1,
