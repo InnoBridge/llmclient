@@ -25,49 +25,49 @@ const isCacheClientSet = (): boolean => {
 
 const execAsync = async (query: string): Promise<void> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.execAsync(query);
 };
 
 const runAsync = async (query: string, params?: any[]): Promise<SQLiteRunResult> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.runAsync(query, params) as SQLiteRunResult;
 };
 
 const getAllAsync = async <T>(query: string, params?: any[]): Promise<T[]> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.getAllAsync<T>(query, params) as T[];
 }
 
 const beginTransaction = async (): Promise<void> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.beginTransaction();
 };
 
 const commitTransaction = async (): Promise<void> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.commitTransaction();
 };
 
 const rollbackTransaction = async (): Promise<void> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.rollbackTransaction();
 };
 
 const getChats = async <T>(): Promise<T[]> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.getChats<T>() as T[];
 };
@@ -79,21 +79,21 @@ const addChat = async (
     updateTimestamp?: number, 
     deletedTimestamp?: number): Promise<SQLiteRunResult> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.addChat(chatId, userId, title, updateTimestamp, deletedTimestamp) as SQLiteRunResult;
 };
 
 const upsertChats = async (chats: Chat[]): Promise<void> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.upsertChats(chats);
 };
 
 const getMessages = async <T>(chatId: string): Promise<T[]> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.getMessages<T>(chatId) as T[];
 };
@@ -106,7 +106,7 @@ const addMessage = async (
     prompt?: string
 ): Promise<SQLiteRunResult> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     try {
         await cacheClient?.beginTransaction();
@@ -123,14 +123,14 @@ const addMessage = async (
 
 const deleteChat = async (chatId: string): Promise<SQLiteRunResult> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.deleteChat(chatId) as SQLiteRunResult;
 };
 
 const renameChat = async (chatId: string, title: string): Promise<SQLiteRunResult> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     try {
         await cacheClient?.beginTransaction();   
@@ -147,7 +147,7 @@ const renameChat = async (chatId: string, title: string): Promise<SQLiteRunResul
 
 const clearChat = async (): Promise<void> => {
     if (!isCacheClientSet()) {
-        throw new Error("Message cache not initialized. Call initializeChatsCache first.");
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.clearChat();
 };
