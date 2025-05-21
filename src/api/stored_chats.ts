@@ -14,12 +14,13 @@ const getChatsByUserId = async <T>(
     limit?: number, 
     page?: number, 
     updatedAfter?: number, 
+    excludeDeleted?: boolean,
     jwt?: string
 ): Promise<PaginatedResult<T>> => {
     if (!chatClient) {
         throw new Error("Chat client not initialized. Call createChatClient first.");
     }
-    return await chatClient.getChatsByUserId(userId, limit, page, updatedAfter, jwt);
+    return await chatClient.getChatsByUserId(userId, limit, page, updatedAfter, excludeDeleted, jwt);
 };
 
 const addChat = async (payload: Chat, jwt?: string): Promise<void> => {
@@ -43,7 +44,7 @@ const syncChats = async (userId: string, chats: Chat[], lastSync?: number, jwt?:
     await chatClient.syncChats(userId, chats, lastSync, jwt);
 };
 
-const deleteChat = async (chatId: number, jwt?: string): Promise<void> => {
+const deleteChat = async (chatId: string, jwt?: string): Promise<void> => {
     if (!chatClient) {
         throw new Error("Chat client not initialized. Call createChatClient first.");
     }
@@ -54,13 +55,14 @@ const getMessagesByUserId = async <T>(
     userId: string, 
     limit?: number, 
     page?: number, 
-    updatedAfter?: number, 
+    updatedAfter?: number,
+    excludeDeleted?: boolean,
     jwt?: string
 ): Promise<PaginatedResult<T>> => {    
     if (!chatClient) {
         throw new Error("Chat client not initialized. Call createChatClient first.");
     }
-    return await chatClient.getMessagesByUserId(userId, limit, page, updatedAfter, jwt);
+    return await chatClient.getMessagesByUserId(userId, limit, page, updatedAfter, excludeDeleted, jwt);
 };
 
 const addMessage = async (payload: Message, jwt?: string): Promise<void> => {

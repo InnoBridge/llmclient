@@ -14,7 +14,8 @@ class PersistentChatClient implements ChatClient {
         userId: string, 
         limit?: number, 
         page?: number, 
-        updatedAfter?: number, 
+        updatedAfter?: number,
+        excludeDeleted?: boolean,
         jwt?: string): Promise<PaginatedResult<T>> {
         const headers = { ...this.headers };
         if (jwt) {
@@ -35,6 +36,10 @@ class PersistentChatClient implements ChatClient {
         
         if (updatedAfter !== undefined) {
             params.append('updatedAfter', updatedAfter.toString());
+        }
+
+        if (excludeDeleted !== undefined) {
+            params.append('excludeDeleted', excludeDeleted.toString());
         }
 
         try {
@@ -125,14 +130,14 @@ class PersistentChatClient implements ChatClient {
         }
     }
 
-    async deleteChat(chatId: number, jwt?: string): Promise<void> {
+    async deleteChat(chatId: string, jwt?: string): Promise<void> {
         const headers = { ...this.headers };
         if (jwt) {
             headers['Authorization'] = `Bearer ${jwt}`;
         }
 
         const params = new URLSearchParams();
-        params.append('chatId', chatId.toString());
+        params.append('chatId', chatId);
 
         try {
             const response = await fetch(`${this.baseUrl}/chat?${params.toString()}`, {
@@ -153,7 +158,8 @@ class PersistentChatClient implements ChatClient {
         userId: string, 
         limit?: number, 
         page?: number, 
-        updatedAfter?: number, 
+        updatedAfter?: number,
+        excludeDeleted?: boolean,
         jwt?: string): Promise<PaginatedResult<T>> {
 
         const headers = { ...this.headers };
@@ -175,6 +181,10 @@ class PersistentChatClient implements ChatClient {
         
         if (updatedAfter !== undefined) {
             params.append('updatedAfter', updatedAfter.toString());
+        }
+
+        if (excludeDeleted !== undefined) {
+            params.append('excludeDeleted', excludeDeleted.toString());
         }
 
         try {

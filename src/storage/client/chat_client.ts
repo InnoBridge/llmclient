@@ -8,19 +8,20 @@ interface ChatClient {
         limit?: number, 
         page?: number, 
         updatedAfter?: number, 
+        excludeDeleted?: boolean,
         jwt?: string): Promise<PaginatedResult<T>>;
-    addChat(payload: Chat, jwt?: string): Promise<void>;
     addChat(payload: Chat, jwt?: string): Promise<void>;
     addChats(chats: Chat[], jwt?: string): Promise<void>;
     syncChats(userId: string, chats: Chat[], lastSync?: number, jwt?: string): Promise<void>;
-    deleteChat(chatId: number, jwt?: string): Promise<void>;
+    deleteChat(chatId: string, jwt?: string): Promise<void>;
     
     // Message operations
     getMessagesByUserId<T>(
         userId: string, 
         limit?: number, 
         page?: number, 
-        updatedAfter?: number, 
+        updatedAfter?: number,
+        excludeDeleted?: boolean,
         jwt?: string): Promise<PaginatedResult<T>>;
     addMessage(payload: Message, jwt?: string): Promise<void>;
     addMessages(payload: Message[], jwt?: string): Promise<void>;

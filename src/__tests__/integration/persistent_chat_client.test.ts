@@ -21,7 +21,7 @@ const initializeClient = (): ChatClient => {
 const addChatTest = async (client: ChatClient) => {
     console.log('Starting addChat test...');
     const chat = {
-        chatId: 1,
+        chatId: '1',
         userId: 'testUser',
         title: 'Hello, this is a test chat message.',
         updatedAt: 1,
@@ -45,43 +45,43 @@ const addChatsAndPaginatedGetChatsByUserIdTest = async (client: ChatClient) => {
     console.log('Starting addChatsAndPaginatedGetChatsByUserId test...');
     const chats = [
         {
-            chatId: 1,
+            chatId: '1',
             userId: 'testUser',
             title: 'Hello, this is a test chat message.',
             updatedAt: 1,
         },
         {
-            chatId: 2,
+            chatId: '2',
             userId: 'testUser',
             title: 'Hello, this is another test chat message.',
             updatedAt: 2,
         },
         {
-            chatId: 3,
+            chatId: '3',
             userId: 'testUser',
             title: 'Hello, this is yet another test chat message.',
             updatedAt: 3,
         },
         {
-            chatId: 4,
+            chatId: '4',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 4,
         },
         {
-            chatId: 5,
+            chatId: '5',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 5,
         },
         {
-            chatId: 6,
+            chatId: '6',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 6,
         },
         {
-            chatId: 7,
+            chatId: '7',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 7,
@@ -113,32 +113,33 @@ const syncChatsTest = async (client: ChatClient) => {
     console.log('Starting syncChats test...');
     const chats = [
         {
-            chatId: 1,
+            chatId: '1',
             userId: 'testUser',
             title: 'Hello, this is a test chat message.',
             updatedAt: 1,
+            createdAt: 1000000000000,
         },
         {
-            chatId: 2,
+            chatId: '2',
             userId: 'testUser',
             title: 'Hello, this is another test chat message.',
             updatedAt: 2,
         },
         {
-            chatId: 3,
+            chatId: '3',
             userId: 'testUser',
             title: 'Hello, this is yet another test chat message.',
             updatedAt: 3,
             deletedAt: 3,
         },
         {
-            chatId: 4,
+            chatId: '4',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 4,
         },
         {
-            chatId: 5,
+            chatId: '5',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 5,
@@ -147,38 +148,38 @@ const syncChatsTest = async (client: ChatClient) => {
 
     const syncChats = [
         {
-            chatId: 1,
+            chatId: '1',
             userId: 'testUser',
             title: 'Hello, this is a test chat message.',
             updatedAt: 1,
         },
         {
-            chatId: 2,
+            chatId: '2',
             userId: 'testUser',
             title: 'Hello, this is another test chat message.',
             updatedAt: 3,
         },
         {
-            chatId: 3,
+            chatId: '3',
             userId: 'testUser',
             title: 'Hello, this is yet another test chat message.',
             updatedAt: 4,
         },
         {
-            chatId: 7,
+            chatId: '7',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 4,
         },
         {
-            chatId: 5,
+            chatId: '5',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 4,
             deletedAt: 4,
         },
         {
-            chatId: 6,
+            chatId: '6',
             userId: 'testUser',
             title: 'Hello, this is a different test chat message.',
             updatedAt: 6,
@@ -204,14 +205,14 @@ const syncChatsTest = async (client: ChatClient) => {
 const addMessageTest = async (client: ChatClient) => {
     console.log('Starting addMessages test...');
     const chat = {
-        chatId: 1,
+        chatId: '1',
         userId: 'testUser',
         title: 'Hello, this is a test chat message.',
         updatedAt: 1,
     } as Chat;
 
     const message = {
-            messageId: 1,
+            messageId: '1',
             chatId: chat.chatId,
             content: 'Hello, this is a test message.',
             role: 'user',
@@ -238,7 +239,7 @@ const addMessageTest = async (client: ChatClient) => {
 const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient) => {
     console.log('Starting addMessagesAndPaginatedGetMessagesByUserId test...');
     const chat = {
-        chatId: 1,
+        chatId: '1',
         userId: 'testUser',
         title: 'Hello, this is a test chat message.',
         updatedAt: 1,
@@ -246,7 +247,7 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
 
     const messages = [
         {
-            messageId: 1,
+            messageId: '1',
             chatId: chat.chatId,
             content: 'Hello, this is a test message.',
             role: 'user',
@@ -255,7 +256,7 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
             prompt: '',
         },
         {
-            messageId: 2,
+            messageId: '2',
             chatId: chat.chatId,
             content: 'Hello, this is another test message.',
             role: 'assistant',
@@ -264,7 +265,7 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
             prompt: '',
         },
         {
-            messageId: 3,
+            messageId: '3',
             chatId: chat.chatId,
             content: 'Hello, this is yet another test message.',
             role: 'user',
@@ -273,7 +274,7 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
             prompt: '',
         },
         {
-            messageId: 4,
+            messageId: '4',
             chatId: chat.chatId,
             content: 'Hello, this is a different test message.',
             role: 'assistant',
@@ -282,7 +283,7 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
             prompt: '',
         },
         {
-            messageId: 5,
+            messageId: '5',
             chatId: chat.chatId,
             content: 'Hello, this is a different test message.',
             role: 'user',
@@ -291,7 +292,7 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
             prompt: '',
         },
         {
-            messageId: 6,
+            messageId: '6',
             chatId: chat.chatId,
             content: 'Hello, this is a different test message.',
             role: 'assistant',
@@ -300,7 +301,7 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
             prompt: '',
         },
         {
-            messageId: 7,
+            messageId: '7',
             chatId: chat.chatId,
             content: 'Hello, this is a different test message.',
             role: 'user',
@@ -330,6 +331,64 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
     }
 };
 
+const testExcludeDeletedParameter = async (client: ChatClient) => {
+    console.log('Starting excludeDeleted parameter test...');
+    const chats = [
+        {
+            chatId: 'active1',
+            userId: 'filterTestUser',
+            title: 'Active chat 1',
+            updatedAt: Date.now(),
+            createdAt: Date.now() - 10000,
+        },
+        {
+            chatId: 'deleted1',
+            userId: 'filterTestUser',
+            title: 'Deleted chat 1',
+            updatedAt: Date.now(),
+            createdAt: Date.now() - 20000,
+            deletedAt: Date.now() - 5000, // This chat is deleted
+        },
+        {
+            chatId: 'active2',
+            userId: 'filterTestUser',
+            title: 'Active chat 2',
+            updatedAt: Date.now(),
+            createdAt: Date.now() - 30000,
+        }
+    ] as Chat[];
+
+    try {
+        await client.addChats(chats);
+        
+        // Test with excludeDeleted = true
+        const filteredChats = await client.getChatsByUserId('filterTestUser', 10, 0, undefined, true);
+        console.log('Chats with excludeDeleted=true:', filteredChats.data);
+        
+        // Should only return active chats
+        if (filteredChats.data.length !== 2) {
+            throw new Error(`Expected 2 chats, got ${filteredChats.data.length}`);
+        }
+        
+        // Test with excludeDeleted = false
+        const allChats = await client.getChatsByUserId('filterTestUser', 10, 0, undefined, false);
+        console.log('Chats with excludeDeleted=false:', allChats.data);
+        
+        // Should return all chats
+        if (allChats.data.length !== 3) {
+            throw new Error(`Expected 3 chats, got ${allChats.data.length}`);
+        }
+        
+        console.log('excludeDeleted parameter test completed successfully!');
+    } catch (error) {
+        console.error('excludeDeleted parameter test failed:', error);
+    } finally {
+        for (const chat of chats) {
+            await client.deleteChat(chat.chatId);
+        }
+    }
+};
+
 // Wrap in an immediately invoked async function to use await
 (async function main() {
     try {
@@ -343,7 +402,8 @@ const addMessagesAndPaginatedGetMessagesByUserIdTest = async (client: ChatClient
 
         await addMessageTest(client);
         await addMessagesAndPaginatedGetMessagesByUserIdTest(client);
-  
+        await testExcludeDeletedParameter(client);
+
         console.log("🎉 All integration tests passed");
     } catch (err) {
         console.error("❌ Integration tests failed:", err);

@@ -6,6 +6,7 @@ import {
     CREATE_CHATS_TABLE_QUERY,
     CREATE_MESSAGES_TABLE_QUERY,
     ADD_CHAT_QUERY,
+    UPSERT_CHATS_QUERY,
     GET_CHATS_QUERY,
     GET_MESSAGES_QUERY,
     ADD_MESSAGE_QUERY,
@@ -13,6 +14,7 @@ import {
     RENAME_CHAT_QUERY,
     CLEAR_CHAT_QUERY
 } from "@/storage/queries";
+import { Chat } from "@/models/storage/dto";
 
 class SqlLiteCachedChatsClient implements CachedChatsClient {
     private db: SqlLiteClient;
@@ -120,11 +122,42 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         return Math.max(-1, ...Array.from(this.migrations.keys())) + 1;
     }
 
-    async addChat(title: string, userId?: string): Promise<SQLiteRunResult> {
+    async addChat(
+        chatId: string,
+        userId: string, 
+        title: string, 
+        updateTimestamp?: number, 
+        deletedTimestamp?: number): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(ADD_CHAT_QUERY, [title, userId || null]);
+            return await this.runAsync(ADD_CHAT_QUERY, [
+                chatId, 
+                userId, 
+                title, 
+                updateTimestamp || null, 
+                deletedTimestamp || null]);
         } catch (error) {
             console.error("Error adding chat:", error);
+            throw error;
+        }
+    };
+
+    async upsertChats(chats: Chat[]): Promise<void> {
+        if (!chats || chats.length === 0) {
+            return;
+        }
+        try {
+            const query = UPSERT_CHATS_QUERY(1);
+            const params = chats.flatMap(chat => [
+                chat.chatId,
+                chat.userId,
+                chat.title,
+                chat.createdAt || null,
+                chat.updatedAt || Date.now(),
+                chat.deletedAt || null
+            ]);
+        } catch (error) {
+            await this.rollbackTransaction();
+            console.error("Error adding chats:", error);
             throw error;
         }
     };
@@ -138,7 +171,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     };
 
-    async getMessages<T>(chatId: number): Promise<T[]> {
+    async getMessages<T>(chatId: string): Promise<T[]> {
         try {
             return await this.getAllAsync(GET_MESSAGES_QUERY, [chatId]);
         } catch (error) {
@@ -148,7 +181,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
     };
 
     async addMessage(
-        chatId: number, 
+        chatId: string, 
         content: string, 
         role: string, 
         imageUrl?: string, 
@@ -161,7 +194,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     }
 
-    async deleteChat(chatId: number): Promise<SQLiteRunResult> {
+    async deleteChat(chatId: string): Promise<SQLiteRunResult> {
         try {
             return await this.runAsync(DELETE_CHAT_QUERY, [chatId]);
         } catch (error) {
@@ -170,7 +203,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     }
 
-    async renameChat(chatId: number, title: string): Promise<SQLiteRunResult> {
+    async renameChat(chatId: string, title: string): Promise<SQLiteRunResult> {
         try {
             return await this.runAsync(RENAME_CHAT_QUERY, [title, chatId]);
         } catch (error) {
@@ -188,7 +221,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     }
 
-    async updateTableTimestamp(tableName: string, id: number): Promise<SQLiteRunResult> {
+    async updateTableTimestamp(tableName: string, id: string): Promise<SQLiteRunResult> {
         try {
             return await this.runAsync(`UPDATE ${tableName} SET updated_at = unixepoch() WHERE id = ?`, [id]);
         } catch (error) {
