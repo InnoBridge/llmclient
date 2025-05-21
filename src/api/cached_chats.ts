@@ -162,6 +162,7 @@ export {
     rollbackTransaction,
     getChats,
     addChat,
+    upsertChats,
     getMessages,
     addMessage,
     deleteChat,

@@ -16,9 +16,8 @@ interface CachedChatsClient {
         title: string, 
         updateTimestamp?: number, 
         deletedTimestamp?: number): Promise<SQLiteRunResult>;
-    getChats<T>(
-        chats: Chat[]
-    ): Promise<T[]>;
+    getChats<T>(): Promise<T[]>;
+    upsertChats(chats: Chat[]): Promise<void>;
     getMessages<T>(chatId: string): Promise<T[]>;
     addMessage(
         chatId: string, 
