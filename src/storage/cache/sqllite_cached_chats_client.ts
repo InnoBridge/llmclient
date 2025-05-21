@@ -146,7 +146,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             return;
         }
         try {
-            const query = UPSERT_CHATS_QUERY(1);
+            const query = UPSERT_CHATS_QUERY(chats.length);
             const params = chats.flatMap(chat => [
                 chat.chatId,
                 chat.userId,
@@ -155,6 +155,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
                 chat.updatedAt || Date.now(),
                 chat.deletedAt || null
             ]);
+            await this.runAsync(query, params);
         } catch (error) {
             await this.rollbackTransaction();
             console.error("Error adding chats:", error);
