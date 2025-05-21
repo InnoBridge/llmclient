@@ -6,28 +6,44 @@ enum Transaction {
 
 const CREATE_CHATS_TABLE_QUERY = 
     `CREATE TABLE IF NOT EXISTS chats (
-        id INTEGER PRIMARY KEY NOT NULL,
+        id TEXT PRIMARY KEY NOT NULL,
         userId INTEGER,
         title TEXT NOT NULL,
         created_at INTEGER DEFAULT (unixepoch()),
-        updated_at INTEGER DEFAULT (unixepoch())
+        updated_at INTEGER DEFAULT (unixepoch()),
+        deleted_at  INTEGER DEFAULT NULL
     );`;
 
 const CREATE_MESSAGES_TABLE_QUERY =
     `CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY NOT NULL,
-        chat_id INTEGER NOT NULL,
+        id TEXT PRIMARY KEY NOT NULL,
+        chat_id TEXT NOT NULL,
         content TEXT NOT NULL,
         imageUrl TEXT,
         role TEXT NOT NULL,
         prompt TEXT,
         created_at INTEGER DEFAULT (unixepoch()),
+        is_synced   INTEGER DEFAULT 0,
         FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
     );`;
 
 const ADD_CHAT_QUERY = 
-    'INSERT INTO chats (title, userId) VALUES (?, ?)';
+    'INSERT INTO chats (id, userId, title, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?)';
 
+const UPSERT_CHATS_QUERY = (chatCount: number): string => {
+  const placeholders = Array(chatCount)
+    .fill(0)
+    .map(() => "(?, ?, ?, ?, ?, ?)")
+    .join(",");
+
+  return `INSERT INTO chats (id, userId, title, created_at, updated_at, deleted_at)
+    VALUES ${placeholders}
+    ON CONFLICT (id) DO UPDATE SET
+    userId = EXCLUDED.userId,
+    title = EXCLUDED.title,
+    updated_at = EXCLUDED.updated_at, 
+    deleted_at = EXCLUDED.deleted_at`;
+};
 
 const GET_CHATS_QUERY = 
     `SELECT c.*, 
@@ -40,7 +56,7 @@ const GET_MESSAGES_QUERY =
     'SELECT * FROM messages WHERE chat_id = ? ORDER BY id ASC';
 
 const ADD_MESSAGE_QUERY =
-    'INSERT INTO messages (chat_id, content, role, imageUrl, prompt) VALUES (?, ?, ?, ?, ?)';
+    'INSERT INTO messages (id, chat_id, content, role, imageUrl, prompt) VALUES (?, ?, ?, ?, ?, ?)';
 
 const DELETE_CHAT_QUERY =
     'DELETE FROM chats WHERE id = ?';
@@ -59,8 +75,9 @@ export {
     Transaction,
     CREATE_CHATS_TABLE_QUERY,
     CREATE_MESSAGES_TABLE_QUERY,
-    ADD_CHAT_QUERY,
     GET_CHATS_QUERY,
+    ADD_CHAT_QUERY,
+    UPSERT_CHATS_QUERY,
     GET_MESSAGES_QUERY,
     ADD_MESSAGE_QUERY,
     DELETE_CHAT_QUERY,

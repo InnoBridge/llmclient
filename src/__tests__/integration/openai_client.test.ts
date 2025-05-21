@@ -4,7 +4,7 @@ import { OpenAIConfiguration, LlmProvider, OllamaConfiguration } from '@/configu
 import { LlmClient } from '@/client/llm_client';
 import OpenAIClient from '@/client/openai_client';
 import { GenerateImageRequest } from '@/models/request/generate_image_request';
-import { ImageSize, ImageQuality, ImageFormat } from '@/models/enums';
+import { ImageSize, ImageFormat } from '@/models/enums';
 import { Model } from '@/models/response/models';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });

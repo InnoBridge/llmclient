@@ -1,4 +1,4 @@
-import { MessageCacheClient } from "@/storage/cache/message_cache_client";
+import { CachedChatsClient } from "@/storage/cache/cached_chats_client";
 import { SQLiteRunResult } from "@/models/sqllite";
 import { SqlLiteClient } from "@/storage/cache/database_client";
 import {
@@ -6,6 +6,7 @@ import {
     CREATE_CHATS_TABLE_QUERY,
     CREATE_MESSAGES_TABLE_QUERY,
     ADD_CHAT_QUERY,
+    UPSERT_CHATS_QUERY,
     GET_CHATS_QUERY,
     GET_MESSAGES_QUERY,
     ADD_MESSAGE_QUERY,
@@ -13,12 +14,26 @@ import {
     RENAME_CHAT_QUERY,
     CLEAR_CHAT_QUERY
 } from "@/storage/queries";
+import { Chat } from "@/models/storage/dto";
 
-class SqlLiteMessageCacheClient implements MessageCacheClient {
+class SqlLiteCachedChatsClient implements CachedChatsClient {
     private db: SqlLiteClient;
+    private migrations: Map<number, () => Promise<void>> = new Map();
     
     constructor(db: SqlLiteClient) {
         this.db = db;
+
+        this.registerMigration(0, async () => {
+            // Create chats table with timestamp
+            await this.createChatsTable();
+            
+            // Create messages table with timestamp
+            await this.createMessagesTable();
+            
+            // Create indexes for better performance
+            await this.execAsync('CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);');
+            await this.execAsync('CREATE INDEX IF NOT EXISTS idx_messages_role ON messages(role);');
+        });
     }
 
     async execAsync(query: string): Promise<void> {
@@ -53,13 +68,16 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
         return await this.execAsync(CREATE_MESSAGES_TABLE_QUERY);
     };
 
+    // Public method to register migrations
+    registerMigration(fromVersion: number, migrationFn: () => Promise<void>): void {
+        this.migrations.set(fromVersion, migrationFn);
+    }
+
     async initializeCache(): Promise<void> {
-        const DATABASE_VERSION = 1;
         let result = await this.db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
         let currentDbVersion = result?.user_version ?? 0;
 
-
-        if (currentDbVersion === 0) {
+        if (currentDbVersion < this.getHighestMigrationVersion()) {
             try {            
                 // Set SQLite mode and enable foreign keys
                 await this.execAsync('PRAGMA journal_mode = "wal";');
@@ -68,37 +86,78 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
                 // THEN begin transaction for schema creation
                 await this.beginTransaction();
 
-                // Create chats table with timestamp
-                await this.createChatsTable();
-                
-                // Create messages table with timestamp
-                await this.createMessagesTable();
-                
-                // Create indexes for better performance
-                await this.execAsync('CREATE INDEX idx_messages_chat_id ON messages(chat_id);');
-                await this.execAsync('CREATE INDEX idx_messages_role ON messages(role);');
-                
-                // Commit the transaction
-                await this.commitTransaction();
-                console.log("Database schema created successfully");
-                
-                currentDbVersion = 1;
+                try {
+                    // Apply migrations in order
+                    while (this.migrations.has(currentDbVersion)) {
+                        console.log(`Upgrading from version ${currentDbVersion} to ${currentDbVersion + 1}`);
+                        const migration = this.migrations.get(currentDbVersion);
+                        await migration!();
+                        currentDbVersion++;
+                        
+                        // Update the version after each successful migration
+                        await this.execAsync(`PRAGMA user_version = ${currentDbVersion}`);
+                    }
+                    
+                    console.log(`Database schema is at version ${currentDbVersion}`);
+                    
+                    // Commit all migrations
+                    await this.commitTransaction();
+                    console.log("Database migrations completed successfully");
+                    
+                } catch (error) {
+                    // Rollback on any error
+                    await this.rollbackTransaction();
+                    console.error("Database migration failed:", error);
+                    throw error;
+                }
             } catch (error) {
-                // Rollback on any error
-                await this.rollbackTransaction();
-                console.error("Database migration failed:", error);
+                console.error("Database initialization failed:", error);
                 throw error;
             }
         }
-
-        await this.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
     }
 
-    async addChat(title: string, userId?: string): Promise<SQLiteRunResult> {
+    // Helper method to get the highest migration version
+    private getHighestMigrationVersion(): number {
+        return Math.max(-1, ...Array.from(this.migrations.keys())) + 1;
+    }
+
+    async addChat(
+        chatId: string,
+        userId: string, 
+        title: string, 
+        updateTimestamp?: number, 
+        deletedTimestamp?: number): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(ADD_CHAT_QUERY, [title, userId || null]);
+            return await this.runAsync(ADD_CHAT_QUERY, [
+                chatId, 
+                userId, 
+                title, 
+                updateTimestamp || null, 
+                deletedTimestamp || null]);
         } catch (error) {
             console.error("Error adding chat:", error);
+            throw error;
+        }
+    };
+
+    async upsertChats(chats: Chat[]): Promise<void> {
+        if (!chats || chats.length === 0) {
+            return;
+        }
+        try {
+            const query = UPSERT_CHATS_QUERY(chats.length);
+            const params = chats.flatMap(chat => [
+                chat.chatId,
+                chat.userId,
+                chat.title,
+                chat.createdAt || null,
+                chat.updatedAt || Date.now(),
+                chat.deletedAt || null
+            ]);
+            await this.runAsync(query, params);
+        } catch (error) {
+            console.error("Error adding chats:", error);
             throw error;
         }
     };
@@ -112,7 +171,7 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
         }
     };
 
-    async getMessages<T>(chatId: number): Promise<T[]> {
+    async getMessages<T>(chatId: string): Promise<T[]> {
         try {
             return await this.getAllAsync(GET_MESSAGES_QUERY, [chatId]);
         } catch (error) {
@@ -122,7 +181,7 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
     };
 
     async addMessage(
-        chatId: number, 
+        chatId: string, 
         content: string, 
         role: string, 
         imageUrl?: string, 
@@ -135,7 +194,7 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
         }
     }
 
-    async deleteChat(chatId: number): Promise<SQLiteRunResult> {
+    async deleteChat(chatId: string): Promise<SQLiteRunResult> {
         try {
             return await this.runAsync(DELETE_CHAT_QUERY, [chatId]);
         } catch (error) {
@@ -144,7 +203,7 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
         }
     }
 
-    async renameChat(chatId: number, title: string): Promise<SQLiteRunResult> {
+    async renameChat(chatId: string, title: string): Promise<SQLiteRunResult> {
         try {
             return await this.runAsync(RENAME_CHAT_QUERY, [title, chatId]);
         } catch (error) {
@@ -162,7 +221,7 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
         }
     }
 
-    async updateTableTimestamp(tableName: string, id: number): Promise<SQLiteRunResult> {
+    async updateTableTimestamp(tableName: string, id: string): Promise<SQLiteRunResult> {
         try {
             return await this.runAsync(`UPDATE ${tableName} SET updated_at = unixepoch() WHERE id = ?`, [id]);
         } catch (error) {
@@ -173,5 +232,5 @@ class SqlLiteMessageCacheClient implements MessageCacheClient {
 };
 
 export {
-    SqlLiteMessageCacheClient
+    SqlLiteCachedChatsClient
 };
