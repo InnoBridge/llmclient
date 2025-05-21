@@ -157,7 +157,6 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             ]);
             await this.runAsync(query, params);
         } catch (error) {
-            await this.rollbackTransaction();
             console.error("Error adding chats:", error);
             throw error;
         }
