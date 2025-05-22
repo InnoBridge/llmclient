@@ -19,6 +19,7 @@ import * as generateImageRequest from '@/models/request/generate_image_request';
 import * as imageResponse from '@/models/response/image_response';
 import * as sqllite from '@/models/sqllite';
 import * as databaseClient from '@/storage/cache/database_client';
+import * as dto from '@/models/storage/dto';
 
 export { 
     configuration,
@@ -41,5 +42,6 @@ export {
     generateImageRequest,
     imageResponse,
     sqllite,
-    databaseClient
+    databaseClient,
+    dto
 };
