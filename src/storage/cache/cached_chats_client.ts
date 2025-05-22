@@ -1,5 +1,5 @@
 import { SQLiteRunResult } from "@/models/sqllite";
-import { Chat } from "@/models/storage/dto";
+import { Chat, Message } from "@/models/storage/dto";
 
 interface CachedChatsClient {
     execAsync(query: string): Promise<void>;
@@ -26,6 +26,7 @@ interface CachedChatsClient {
         imageUrl?: string, 
         prompt?: string
     ): Promise<SQLiteRunResult>;
+    upsertMessages(messages: Message[], isSynced?: boolean): Promise<void>;
     deleteChat(chatId: string): Promise<SQLiteRunResult>;
     renameChat(chatId: string, title: string): Promise<SQLiteRunResult>;
     clearChat(): Promise<void>;

@@ -58,6 +58,22 @@ const GET_MESSAGES_QUERY =
 const ADD_MESSAGE_QUERY =
     'INSERT INTO messages (id, chat_id, content, role, imageUrl, prompt) VALUES (?, ?, ?, ?, ?, ?)';
 
+const UPSERT_MESSAGES_QUERY = (messageCount: number): string => {
+  const placeholders = Array(messageCount)
+    .fill(0)
+    .map(() => "(?, ?, ?, ?, ?, ?, ?, ?)")
+    .join(",");
+
+  return `INSERT INTO messages (id, chat_id, content, role, imageUrl, prompt, created_at, is_synced)
+    VALUES ${placeholders}
+    ON CONFLICT (id) DO UPDATE SET
+    content = EXCLUDED.content,
+    role = EXCLUDED.role,
+    imageUrl = EXCLUDED.imageUrl,
+    prompt = EXCLUDED.prompt,
+    is_synced = EXCLUDED.is_synced`;
+};
+
 const DELETE_CHAT_QUERY =
     'DELETE FROM chats WHERE id = ?';
 
@@ -80,6 +96,7 @@ export {
     UPSERT_CHATS_QUERY,
     GET_MESSAGES_QUERY,
     ADD_MESSAGE_QUERY,
+    UPSERT_MESSAGES_QUERY,
     DELETE_CHAT_QUERY,
     RENAME_CHAT_QUERY,
     CLEAR_CHAT_QUERY,

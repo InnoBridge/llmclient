@@ -2,7 +2,7 @@ import { CachedChatsClient } from "@/storage/cache/cached_chats_client";
 import { SqlLiteCachedChatsClient } from "@/storage/cache/sqllite_cached_chats_client";
 import { SqlLiteClient } from "@/storage/cache/database_client";
 import { SQLiteRunResult } from "@/models/sqllite";
-import { Chat } from "@/models/storage/dto";
+import { Chat, Message } from "@/models/storage/dto";
 
 let cacheClient: CachedChatsClient | null = null;
 
@@ -82,6 +82,13 @@ const addChat = async (
         throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     return await cacheClient?.addChat(chatId, userId, title, updateTimestamp, deletedTimestamp) as SQLiteRunResult;
+};
+
+const upsertMessages = async (messages: Message[], isSynced?: boolean): Promise<void> => {
+    if (!isCacheClientSet()) {
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
+    }
+    return await cacheClient?.upsertMessages(messages, isSynced);
 };
 
 const upsertChats = async (chats: Chat[]): Promise<void> => {
@@ -165,6 +172,7 @@ export {
     upsertChats,
     getMessages,
     addMessage,
+    upsertMessages,
     deleteChat,
     renameChat,
     clearChat,

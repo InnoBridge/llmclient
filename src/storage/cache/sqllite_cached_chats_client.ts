@@ -10,11 +10,12 @@ import {
     GET_CHATS_QUERY,
     GET_MESSAGES_QUERY,
     ADD_MESSAGE_QUERY,
+    UPSERT_MESSAGES_QUERY,
     DELETE_CHAT_QUERY,
     RENAME_CHAT_QUERY,
     CLEAR_CHAT_QUERY
 } from "@/storage/queries";
-import { Chat } from "@/models/storage/dto";
+import { Chat, Message } from "@/models/storage/dto";
 
 class SqlLiteCachedChatsClient implements CachedChatsClient {
     private db: SqlLiteClient;
@@ -192,7 +193,31 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             console.error("Error adding message:", error);
             throw error;
         }
-    }
+    };
+
+    async upsertMessages(messages: Message[], isSynced: boolean = false): Promise<void> {
+        if (!messages || messages.length === 0) {
+            return;
+        }
+
+        try {
+            const query = UPSERT_MESSAGES_QUERY(messages.length);
+            const params = messages.flatMap(message => [
+                message.messageId,
+                message.chatId,
+                message.content,
+                message.role,
+                message.imageUrl || null,
+                message.prompt || null,
+                message.createdAt || null,
+                isSynced
+            ]);
+            await this.runAsync(query, params);
+        } catch (error) {
+            console.error("Error adding messages:", error);
+            throw error;
+        }
+    };
 
     async deleteChat(chatId: string): Promise<SQLiteRunResult> {
         try {
@@ -201,7 +226,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             console.error("Error deleting chat:", error);
             throw error;
         }
-    }
+    };
 
     async renameChat(chatId: string, title: string): Promise<SQLiteRunResult> {
         try {
@@ -210,7 +235,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             console.error("Error renaming chat:", error);
             throw error;
         }
-    }
+    };
 
     async clearChat(): Promise<void> {
         try {
@@ -219,7 +244,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             console.error("Error clearing chat:", error);
             throw error;
         }
-    }
+    };
 
     async updateTableTimestamp(tableName: string, id: string): Promise<SQLiteRunResult> {
         try {
@@ -228,7 +253,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             console.error("Error updating table timestamp:", error);
             throw error;
         }
-    }
+    };
 };
 
 export {
