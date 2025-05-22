@@ -13,7 +13,8 @@ import {
     UPSERT_MESSAGES_QUERY,
     DELETE_CHAT_QUERY,
     RENAME_CHAT_QUERY,
-    CLEAR_CHAT_QUERY
+    CLEAR_CHAT_QUERY,
+    CLEAR_MESSAGE_QUERY
 } from "@/storage/queries";
 import { Chat, Message } from "@/models/storage/dto";
 
@@ -242,6 +243,15 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             return await this.execAsync(CLEAR_CHAT_QUERY);
         } catch (error) {
             console.error("Error clearing chat:", error);
+            throw error;
+        }
+    };
+
+    async clearMessage(): Promise<void> {
+        try {
+            return await this.execAsync(CLEAR_MESSAGE_QUERY);
+        } catch (error) {
+            console.error("Error clearing messages:", error);
             throw error;
         }
     };

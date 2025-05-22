@@ -159,6 +159,13 @@ const clearChat = async (): Promise<void> => {
     return await cacheClient?.clearChat();
 };
 
+const clearMessage = async (): Promise<void> => {
+    if (!isCacheClientSet()) {
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
+    }
+    return await cacheClient?.clearMessage();
+};
+
 export {
     initializeChatsCache,
     execAsync,
@@ -176,4 +183,5 @@ export {
     deleteChat,
     renameChat,
     clearChat,
+    clearMessage
 };

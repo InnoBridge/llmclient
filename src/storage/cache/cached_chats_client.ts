@@ -30,6 +30,7 @@ interface CachedChatsClient {
     deleteChat(chatId: string): Promise<SQLiteRunResult>;
     renameChat(chatId: string, title: string): Promise<SQLiteRunResult>;
     clearChat(): Promise<void>;
+    clearMessage(): Promise<void>;
     updateTableTimestamp(tableName: string, id: string): Promise<SQLiteRunResult>;
 };
 

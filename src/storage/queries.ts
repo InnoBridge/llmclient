@@ -84,6 +84,10 @@ const CLEAR_CHAT_QUERY =
     `DELETE FROM chats;
       -- Messages will be deleted automatically via CASCADE constraint`;
 
+const CLEAR_MESSAGE_QUERY =
+    `DELETE FROM messages;
+      -- Chats will be deleted automatically via CASCADE constraint`;
+
 const updateTableTimestampQuery = (tableName: string): string => 
     `UPDATE ${tableName} SET updated_at = unixepoch() WHERE id = ?`;
 
@@ -100,5 +104,6 @@ export {
     DELETE_CHAT_QUERY,
     RENAME_CHAT_QUERY,
     CLEAR_CHAT_QUERY,
+    CLEAR_MESSAGE_QUERY,
     updateTableTimestampQuery
 };
