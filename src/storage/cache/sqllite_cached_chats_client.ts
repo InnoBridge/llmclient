@@ -5,9 +5,10 @@ import {
     Transaction,
     CREATE_CHATS_TABLE_QUERY,
     CREATE_MESSAGES_TABLE_QUERY,
+    GET_CHATS_QUERY,
+    GET_CHATS_BY_USER_ID_QUERY,
     ADD_CHAT_QUERY,
     UPSERT_CHATS_QUERY,
-    GET_CHATS_QUERY,
     GET_MESSAGES_QUERY,
     ADD_MESSAGE_QUERY,
     UPSERT_MESSAGES_QUERY,
@@ -124,6 +125,51 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         return Math.max(-1, ...Array.from(this.migrations.keys())) + 1;
     }
 
+    async getChats<T>(): Promise<T[]> {
+        try {
+            return await this.getAllAsync(GET_CHATS_QUERY);
+        } catch (error) {
+            console.error("Error fetching chats:", error);
+            throw error;
+        }
+    };
+
+    async getChatsByUserId(
+        userId: string, 
+        updatedAfter: number = -1, 
+        limit: number = 20, 
+        page: number = 0, 
+        excludeDeleted: boolean = false): Promise<Chat[]> {
+        const offset = page * limit;
+        try {
+            const result = await this.getAllAsync(GET_CHATS_BY_USER_ID_QUERY(excludeDeleted), [
+                userId,
+                updatedAfter,
+                limit,
+                offset,
+            ]);
+            return result.map((chat: any) => {
+                const chatObject: any = {
+                    chatId: chat.id,
+                    userId: chat.user_id,
+                    title: chat.title,
+                    createdAt: chat.created_at,
+                    updatedAt: chat.updated_at,
+                };
+
+                if (chat.deleted_at) {
+                    chatObject.deletedAt = chat.deleted_at;
+                }
+
+                return chatObject as Chat;
+            });
+        } catch (error) {
+            console.error("Error fetching chats by user ID:", error);
+            throw error;
+        }
+    }
+
+
     async addChat(
         chatId: string,
         userId: string, 
@@ -164,15 +210,6 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     };
 
-    async getChats<T>(): Promise<T[]> {
-        try {
-            return await this.getAllAsync(GET_CHATS_QUERY);
-        } catch (error) {
-            console.error("Error fetching chats:", error);
-            throw error;
-        }
-    };
-
     async getMessages<T>(chatId: string): Promise<T[]> {
         try {
             return await this.getAllAsync(GET_MESSAGES_QUERY, [chatId]);
@@ -183,13 +220,14 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
     };
 
     async addMessage(
+        messageId: string,
         chatId: string, 
         content: string, 
         role: string, 
         imageUrl?: string, 
         prompt?: string): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(ADD_MESSAGE_QUERY, [chatId, content, role, imageUrl, prompt]);
+            return await this.runAsync(ADD_MESSAGE_QUERY, [messageId, chatId, content, role, imageUrl, prompt]);
         } catch (error) {
             console.error("Error adding message:", error);
             throw error;

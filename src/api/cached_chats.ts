@@ -72,6 +72,18 @@ const getChats = async <T>(): Promise<T[]> => {
     return await cacheClient?.getChats<T>() as T[];
 };
 
+const getChatsByUserId = async (
+    userId: string, 
+    updatedAfter?: number, 
+    limit?: number, 
+    page?: number, 
+    excludeDeleted?: boolean): Promise<Chat[]> => {
+    if (!isCacheClientSet()) {
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
+    }
+    return await cacheClient?.getChatsByUserId(userId, updatedAfter, limit, page, excludeDeleted) as Chat[];
+};
+
 const addChat = async (
     chatId: string,
     userId: string, 
@@ -106,6 +118,7 @@ const getMessages = async <T>(chatId: string): Promise<T[]> => {
 };
 
 const addMessage = async (
+    messageId: string,
     chatId: string, 
     content: string, 
     role: string,
@@ -117,7 +130,7 @@ const addMessage = async (
     }
     try {
         await cacheClient?.beginTransaction();
-        const result = await cacheClient?.addMessage(chatId, content, role, imageUrl, prompt) as SQLiteRunResult;
+        const result = await cacheClient?.addMessage(messageId, chatId, content, role, imageUrl, prompt) as SQLiteRunResult;
         await cacheClient?.updateTableTimestamp("chats", chatId);
         await cacheClient?.commitTransaction();
         return result;
@@ -175,6 +188,7 @@ export {
     commitTransaction,
     rollbackTransaction,
     getChats,
+    getChatsByUserId,
     addChat,
     upsertChats,
     getMessages,

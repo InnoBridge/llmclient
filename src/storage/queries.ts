@@ -27,6 +27,24 @@ const CREATE_MESSAGES_TABLE_QUERY =
         FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
     );`;
 
+const GET_CHATS_QUERY = 
+    `SELECT c.*, 
+                  (SELECT COUNT(*) FROM messages WHERE chat_id = c.id) as messageCount,
+                  (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as lastActivity
+            FROM chats c
+            ORDER BY lastActivity DESC, c.id DESC`;
+
+const GET_CHATS_BY_USER_ID_QUERY = (excludeDeleted: boolean): string =>
+  `SELECT c.*, 
+          (SELECT COUNT(*) FROM messages WHERE chat_id = c.id) as messageCount,
+          (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as lastActivity
+   FROM chats c
+   WHERE c.userId = ? 
+   AND c.updated_at > ? 
+   ${excludeDeleted ? 'AND c.deleted_at IS NULL' : ''}
+   ORDER BY lastActivity DESC, c.id DESC
+   LIMIT ? OFFSET ?`;
+
 const ADD_CHAT_QUERY = 
     'INSERT INTO chats (id, userId, title, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?)';
 
@@ -44,13 +62,6 @@ const UPSERT_CHATS_QUERY = (chatCount: number): string => {
     updated_at = EXCLUDED.updated_at, 
     deleted_at = EXCLUDED.deleted_at`;
 };
-
-const GET_CHATS_QUERY = 
-    `SELECT c.*, 
-                  (SELECT COUNT(*) FROM messages WHERE chat_id = c.id) as messageCount,
-                  (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as lastActivity
-            FROM chats c
-            ORDER BY lastActivity DESC, c.id DESC`;
 
 const GET_MESSAGES_QUERY =
     'SELECT * FROM messages WHERE chat_id = ? ORDER BY id ASC';
@@ -96,6 +107,7 @@ export {
     CREATE_CHATS_TABLE_QUERY,
     CREATE_MESSAGES_TABLE_QUERY,
     GET_CHATS_QUERY,
+    GET_CHATS_BY_USER_ID_QUERY,
     ADD_CHAT_QUERY,
     UPSERT_CHATS_QUERY,
     GET_MESSAGES_QUERY,

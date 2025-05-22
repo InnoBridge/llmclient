@@ -10,16 +10,23 @@ interface CachedChatsClient {
     rollbackTransaction(): Promise<void>;
     initializeCache(): Promise<void>;
     registerMigration(version: number, migration: () => Promise<void>): void;
+    getChats<T>(): Promise<T[]>;
+    getChatsByUserId(
+        userId: string, 
+        updatedAfter?: number, 
+        limit?: number, 
+        page?: number, 
+        excludeDeleted?: boolean): Promise<Chat[]>;
     addChat(
         chatId: string,
         userId: string, 
         title: string, 
         updateTimestamp?: number, 
         deletedTimestamp?: number): Promise<SQLiteRunResult>;
-    getChats<T>(): Promise<T[]>;
     upsertChats(chats: Chat[]): Promise<void>;
     getMessages<T>(chatId: string): Promise<T[]>;
     addMessage(
+        messageId: string,
         chatId: string, 
         content: string,
         role: string, 
