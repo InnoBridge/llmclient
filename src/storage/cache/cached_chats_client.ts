@@ -25,7 +25,7 @@ interface CachedChatsClient {
         updateTimestamp?: number, 
         deletedTimestamp?: number): Promise<SQLiteRunResult>;
     upsertChats(chats: Chat[]): Promise<void>;
-    getMessages<T>(chatId: string): Promise<T[]>;
+    getMessages(chatId: string): Promise<Message[]>;
     addMessage(
         messageId: string,
         chatId: string, 
@@ -35,6 +35,10 @@ interface CachedChatsClient {
         prompt?: string,
         isSynced?: boolean
     ): Promise<SQLiteRunResult>;
+    getAndMarkUnsyncedMessagesByUserId(
+        chatId: string, 
+        limit?: number, 
+        page?: number): Promise<Message[]>;
     upsertMessages(messages: Message[], isSynced?: boolean): Promise<void>;
     deleteChat(chatId: string): Promise<SQLiteRunResult>;
     renameChat(chatId: string, title: string): Promise<SQLiteRunResult>;

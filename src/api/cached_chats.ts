@@ -76,16 +76,22 @@ const getChats = async <T>(): Promise<T[]> => {
 const getChatsByUserId = async (
     userId: string, 
     updatedAfter?: number, 
-    limit?: number, 
-    page?: number, 
+    limit: number = 20, 
+    page: number = 0, 
     excludeDeleted?: boolean): Promise<PaginatedResult<Chat>> => {
     if (!isCacheClientSet()) {
         throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
+    if (page < 0) {
+        throw new Error("Page number cannot be negative.");
+    }
+    if (limit <= 0) {
+        throw new Error("Limit must be greater than zero.");
+    }
     const chats = await cacheClient?.getChatsByUserId(userId, updatedAfter, limit, page, excludeDeleted) as Chat[];
     const total = await cacheClient?.countChatsByUserId(userId, updatedAfter);
-    const totalPages = Math.ceil((total || 0) / (limit || 1)); 
-    const currentPage = page || 1;
+    const totalPages = Math.ceil((total || 0) / limit); 
+    const currentPage = page;
     return {
         data: chats,
         pagination: {
@@ -123,11 +129,11 @@ const upsertChats = async (chats: Chat[]): Promise<void> => {
     return await cacheClient?.upsertChats(chats);
 };
 
-const getMessages = async <T>(chatId: string): Promise<T[]> => {
+const getMessages = async (chatId: string): Promise<Message[]> => {
     if (!isCacheClientSet()) {
         throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
-    return await cacheClient?.getMessages<T>(chatId) as T[];
+    return await cacheClient!.getMessages(chatId);
 };
 
 const addMessage = async (
@@ -153,6 +159,15 @@ const addMessage = async (
         console.error("Error adding message:", error.message);
         throw error;
     }
+};
+
+const getAndMarkUnsyncedMessagesByUserId = async (
+    chatId: string, 
+    limit?: number): Promise<Message[]> => {
+    if (!isCacheClientSet()) {
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
+    }
+    return await cacheClient?.getAndMarkUnsyncedMessagesByUserId(chatId, limit) as Message[];
 };
 
 const deleteChat = async (chatId: string): Promise<SQLiteRunResult> => {
@@ -207,6 +222,7 @@ export {
     upsertChats,
     getMessages,
     addMessage,
+    getAndMarkUnsyncedMessagesByUserId,
     upsertMessages,
     deleteChat,
     renameChat,

@@ -17,7 +17,8 @@ import {
     RENAME_CHAT_QUERY,
     CLEAR_CHAT_QUERY,
     CLEAR_MESSAGE_QUERY,
-    UPDATE_TABLE_TIMESTAMP_QUERY
+    UPDATE_TABLE_TIMESTAMP_QUERY,
+    GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY
 } from "@/storage/queries";
 import { Chat, Message } from "@/models/storage/dto";
 
@@ -229,9 +230,20 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     };
 
-    async getMessages<T>(chatId: string): Promise<T[]> {
+    async getMessages(chatId: string): Promise<Message[]> {
         try {
-            return await this.getAllAsync(GET_MESSAGES_QUERY, [chatId]);
+            const result = await this.getAllAsync(GET_MESSAGES_QUERY, [chatId]);
+            return result.map((message: any) => {
+                return {
+                    messageId: message.id,
+                    chatId: message.chat_id,
+                    content: message.content,
+                    role: message.role,
+                    createdAt: message.created_at,
+                    imageUrl: message.image_url,
+                    prompt: message.prompt
+                } as Message;
+            });
         } catch (error) {
             console.error("Error fetching messages:", error);
             throw error;
@@ -285,6 +297,36 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             await this.runAsync(query, params);
         } catch (error) {
             console.error("Error adding messages:", error);
+            throw error;
+        }
+    };
+
+    // async countUnsyncedMessagesByUserId(userId: string): Promise<number> {
+
+
+    async getAndMarkUnsyncedMessagesByUserId(userId: string, limit: number = 20): Promise<Message[]> {
+        try {
+            if (limit <= 0) {
+                const errorMsg = `Invalid limit: ${limit}. Limit must be greater than 0.`;
+                console.error(errorMsg);
+                throw new Error(errorMsg);
+            }
+            const result = await this.getAllAsync(GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY, [
+                userId,
+                limit]);
+            return result.map((message: any) => {
+                return {
+                    messageId: message.id,
+                    chatId: message.chat_id,
+                    content: message.content,
+                    role: message.role,
+                    createdAt: message.created_at,
+                    imageUrl: message.image_url,
+                    prompt: message.prompt
+                } as Message;
+            });
+        } catch (error) {
+            console.error("Error fetching unsynced messages by user ID:", error);
             throw error;
         }
     };

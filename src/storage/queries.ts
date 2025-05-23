@@ -73,12 +73,19 @@ const UPSERT_CHATS_QUERY = (chatCount: number): string => {
 const GET_MESSAGES_QUERY =
     'SELECT * FROM messages WHERE chat_id = ? ORDER BY id ASC';
 
-const COUNT_UNSYNCED_MESSAGES_BY_USER_ID_QUERY = 
-    `SELECT COUNT(*) as total 
-     FROM messages m
-     JOIN chats c ON m.chat_id = c.id
-     WHERE c.user_id = ? 
-     AND m.is_synced = 0`;
+const GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY = 
+    `UPDATE messages 
+     SET is_synced = 1 
+     WHERE id IN (
+        SELECT m.id 
+        FROM messages m
+        JOIN chats c ON m.chat_id = c.id
+        WHERE c.user_id = ? 
+        AND m.is_synced = 0
+        ORDER BY m.created_at DESC
+        LIMIT ?
+     ) 
+     RETURNING id, chat_id, content, role, imageUrl, prompt, created_at, is_synced;`;
 
 const ADD_MESSAGE_QUERY =
     'INSERT INTO messages (id, chat_id, content, role, imageUrl, prompt, created_at, is_synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
@@ -130,6 +137,7 @@ export {
     UPSERT_MESSAGES_QUERY,
     DELETE_CHAT_QUERY,
     RENAME_CHAT_QUERY,
+    GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY,
     CLEAR_CHAT_QUERY,
     CLEAR_MESSAGE_QUERY,
     UPDATE_TABLE_TIMESTAMP_QUERY
