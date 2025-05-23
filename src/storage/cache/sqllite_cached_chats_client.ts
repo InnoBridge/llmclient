@@ -9,13 +9,15 @@ import {
     GET_CHATS_BY_USER_ID_QUERY,
     ADD_CHAT_QUERY,
     UPSERT_CHATS_QUERY,
+    COUNT_CHATS_BY_USER_ID_QUERY,
     GET_MESSAGES_QUERY,
     ADD_MESSAGE_QUERY,
     UPSERT_MESSAGES_QUERY,
     DELETE_CHAT_QUERY,
     RENAME_CHAT_QUERY,
     CLEAR_CHAT_QUERY,
-    CLEAR_MESSAGE_QUERY
+    CLEAR_MESSAGE_QUERY,
+    UPDATE_TABLE_TIMESTAMP_QUERY
 } from "@/storage/queries";
 import { Chat, Message } from "@/models/storage/dto";
 
@@ -49,6 +51,10 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
 
     async getAllAsync<T>(query: string, params: any[] = []): Promise<T[]> {
         return await this.db.getAllAsync<T>(query, params);
+    };
+
+    async getFirstAsync<T>(query: string, params: any[] = []): Promise<T | null> {
+        return await this.db.getFirstAsync<T>(query, params);
     };
 
     async beginTransaction(): Promise<void> {
@@ -134,6 +140,16 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     };
 
+    async countChatsByUserId(userId: string, updatedAfter: number = -1, excludeDeleted: boolean = false): Promise<number> {
+        try {
+            const result: any = await this.getFirstAsync(COUNT_CHATS_BY_USER_ID_QUERY(excludeDeleted), [userId, updatedAfter]);
+            return result?.total || 0;
+        } catch (error) {
+            console.error("Error counting chats by user ID:", error);
+            throw error;
+        }
+    };
+
     async getChatsByUserId(
         userId: string, 
         updatedAfter: number = -1, 
@@ -176,12 +192,14 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         title: string, 
         updateTimestamp?: number, 
         deletedTimestamp?: number): Promise<SQLiteRunResult> {
+        const now = Date.now();
         try {
             return await this.runAsync(ADD_CHAT_QUERY, [
                 chatId, 
                 userId, 
-                title, 
-                updateTimestamp || null, 
+                title,
+                now,
+                updateTimestamp || now, 
                 deletedTimestamp || null]);
         } catch (error) {
             console.error("Error adding chat:", error);
@@ -193,19 +211,20 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         if (!chats || chats.length === 0) {
             return;
         }
+        const now = Date.now();
         try {
             const query = UPSERT_CHATS_QUERY(chats.length);
             const params = chats.flatMap(chat => [
                 chat.chatId,
                 chat.userId,
                 chat.title,
-                chat.createdAt || null,
-                chat.updatedAt || Date.now(),
+                chat.createdAt || now,
+                chat.updatedAt || now,
                 chat.deletedAt || null
             ]);
             await this.runAsync(query, params);
         } catch (error) {
-            console.error("Error adding chats:", error);
+            console.error("Error upserting chats:", error);
             throw error;
         }
     };
@@ -225,9 +244,20 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         content: string, 
         role: string, 
         imageUrl?: string, 
-        prompt?: string): Promise<SQLiteRunResult> {
+        prompt?: string,
+        isSynced: boolean = false
+    ): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(ADD_MESSAGE_QUERY, [messageId, chatId, content, role, imageUrl, prompt]);
+            const now = Date.now();
+            return await this.runAsync(ADD_MESSAGE_QUERY, [
+                messageId, 
+                chatId, 
+                content, 
+                role, 
+                imageUrl || null, 
+                prompt || null,
+                now,
+                isSynced]);
         } catch (error) {
             console.error("Error adding message:", error);
             throw error;
@@ -240,6 +270,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
 
         try {
+            const now = Date.now();
             const query = UPSERT_MESSAGES_QUERY(messages.length);
             const params = messages.flatMap(message => [
                 message.messageId,
@@ -248,7 +279,7 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
                 message.role,
                 message.imageUrl || null,
                 message.prompt || null,
-                message.createdAt || null,
+                message.createdAt || now,
                 isSynced
             ]);
             await this.runAsync(query, params);
@@ -296,7 +327,8 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
 
     async updateTableTimestamp(tableName: string, id: string): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(`UPDATE ${tableName} SET updated_at = unixepoch() WHERE id = ?`, [id]);
+            const now = Date.now();
+            return await this.runAsync(UPDATE_TABLE_TIMESTAMP_QUERY(tableName), [now, id]);
         } catch (error) {
             console.error("Error updating table timestamp:", error);
             throw error;

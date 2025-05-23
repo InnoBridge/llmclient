@@ -3,6 +3,7 @@ import { SqlLiteCachedChatsClient } from "@/storage/cache/sqllite_cached_chats_c
 import { SqlLiteClient } from "@/storage/cache/database_client";
 import { SQLiteRunResult } from "@/models/sqllite";
 import { Chat, Message } from "@/models/storage/dto";
+import { PaginatedResult } from "@/models/pagination";
 
 let cacheClient: CachedChatsClient | null = null;
 
@@ -77,11 +78,23 @@ const getChatsByUserId = async (
     updatedAfter?: number, 
     limit?: number, 
     page?: number, 
-    excludeDeleted?: boolean): Promise<Chat[]> => {
+    excludeDeleted?: boolean): Promise<PaginatedResult<Chat>> => {
     if (!isCacheClientSet()) {
         throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
-    return await cacheClient?.getChatsByUserId(userId, updatedAfter, limit, page, excludeDeleted) as Chat[];
+    const chats = await cacheClient?.getChatsByUserId(userId, updatedAfter, limit, page, excludeDeleted) as Chat[];
+    const total = await cacheClient?.countChatsByUserId(userId, updatedAfter);
+    const totalPages = Math.ceil((total || 0) / (limit || 1)); 
+    const currentPage = page || 1;
+    return {
+        data: chats,
+        pagination: {
+            totalCount: total,
+            totalPages: totalPages,
+            currentPage: page,
+            hasNext: currentPage < totalPages - 1
+        }
+    } as PaginatedResult<Chat>;
 };
 
 const addChat = async (
@@ -123,14 +136,15 @@ const addMessage = async (
     content: string, 
     role: string,
     imageUrl?: string,  
-    prompt?: string
+    prompt?: string,
+    isSynced?: boolean
 ): Promise<SQLiteRunResult> => {
     if (!isCacheClientSet()) {
         throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
     }
     try {
         await cacheClient?.beginTransaction();
-        const result = await cacheClient?.addMessage(messageId, chatId, content, role, imageUrl, prompt) as SQLiteRunResult;
+        const result = await cacheClient?.addMessage(messageId, chatId, content, role, imageUrl, prompt, isSynced) as SQLiteRunResult;
         await cacheClient?.updateTableTimestamp("chats", chatId);
         await cacheClient?.commitTransaction();
         return result;

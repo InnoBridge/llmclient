@@ -11,6 +11,7 @@ interface CachedChatsClient {
     initializeCache(): Promise<void>;
     registerMigration(version: number, migration: () => Promise<void>): void;
     getChats<T>(): Promise<T[]>;
+    countChatsByUserId(userId: string, updatedAfter?: number): Promise<number>;
     getChatsByUserId(
         userId: string, 
         updatedAfter?: number, 
@@ -31,7 +32,8 @@ interface CachedChatsClient {
         content: string,
         role: string, 
         imageUrl?: string, 
-        prompt?: string
+        prompt?: string,
+        isSynced?: boolean
     ): Promise<SQLiteRunResult>;
     upsertMessages(messages: Message[], isSynced?: boolean): Promise<void>;
     deleteChat(chatId: string): Promise<SQLiteRunResult>;
