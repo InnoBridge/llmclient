@@ -19,7 +19,7 @@ const CREATE_MESSAGES_TABLE_QUERY =
         id TEXT PRIMARY KEY NOT NULL,
         chat_id TEXT NOT NULL,
         content TEXT NOT NULL,
-        imageUrl TEXT,
+        image_url TEXT,
         role TEXT NOT NULL,
         prompt TEXT,
         created_at INTEGER NOT NULL,
@@ -95,10 +95,10 @@ const GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY =
         ORDER BY m.created_at DESC
         LIMIT ?
      ) 
-     RETURNING id, chat_id, content, role, imageUrl, prompt, created_at, is_synced;`;
+     RETURNING id, chat_id, content, role, image_url, prompt, created_at, is_synced;`;
 
 const ADD_MESSAGE_QUERY =
-    'INSERT INTO messages (id, chat_id, content, role, imageUrl, prompt, created_at, is_synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    'INSERT INTO messages (id, chat_id, content, role, image_url, prompt, created_at, is_synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
 const UPSERT_MESSAGES_QUERY = (messageCount: number): string => {
   const placeholders = Array(messageCount)
@@ -106,12 +106,12 @@ const UPSERT_MESSAGES_QUERY = (messageCount: number): string => {
     .map(() => "(?, ?, ?, ?, ?, ?, ?, ?)")
     .join(",");
 
-  return `INSERT INTO messages (id, chat_id, content, role, imageUrl, prompt, created_at, is_synced)
+  return `INSERT INTO messages (id, chat_id, content, role, image_url, prompt, created_at, is_synced)
     VALUES ${placeholders}
     ON CONFLICT (id) DO UPDATE SET
     content = EXCLUDED.content,
     role = EXCLUDED.role,
-    imageUrl = EXCLUDED.imageUrl,
+    image_url = EXCLUDED.image_url,
     prompt = EXCLUDED.prompt,
     is_synced = EXCLUDED.is_synced`;
 };

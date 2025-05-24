@@ -38,8 +38,7 @@ interface CachedChatsClient {
     ): Promise<SQLiteRunResult>;
     getAndMarkUnsyncedMessagesByUserId(
         chatId: string, 
-        limit?: number, 
-        page?: number): Promise<Message[]>;
+        limit?: number): Promise<Message[]>;
     upsertMessages(messages: Message[], isSynced?: boolean): Promise<void>;
     deleteChat(chatId: string): Promise<SQLiteRunResult>;
     markChatAsDeleted(chatId: string): Promise<SQLiteRunResult>;

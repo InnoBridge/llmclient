@@ -180,7 +180,7 @@ class PersistentChatClient implements ChatClient {
         }
         
         if (createdAfter !== undefined) {
-            params.append('updatedAfter', createdAfter.toString());
+            params.append('createdAfter', createdAfter.toString());
         }
 
         if (excludeDeleted !== undefined) {
