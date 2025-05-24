@@ -3,6 +3,7 @@ import * as api from '@/api/llm';
 import * as proxyApi from '@/api/proxy_llm';
 import * as cachedChatsApi from '@/api/cached_chats';
 import * as storedChatsApi from '@/api/stored_chats';
+import * as syncChatsApi from '@/api/sync_chats';
 import * as model from '@/models/response/models';
 import * as chatRequest from '@/models/request/chat_request';
 import * as content from '@/models/request/content';
@@ -19,6 +20,7 @@ import * as generateImageRequest from '@/models/request/generate_image_request';
 import * as imageResponse from '@/models/response/image_response';
 import * as sqllite from '@/models/sqllite';
 import * as databaseClient from '@/storage/cache/database_client';
+import * as dto from '@/models/storage/dto';
 
 export { 
     configuration,
@@ -26,6 +28,7 @@ export {
     proxyApi,
     cachedChatsApi,
     storedChatsApi,
+    syncChatsApi,
     model,
     chatRequest,
     content,
@@ -41,5 +44,6 @@ export {
     generateImageRequest,
     imageResponse,
     sqllite,
-    databaseClient
+    databaseClient,
+    dto
 };

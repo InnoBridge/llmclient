@@ -158,7 +158,7 @@ class PersistentChatClient implements ChatClient {
         userId: string, 
         limit?: number, 
         page?: number, 
-        updatedAfter?: number,
+        createdAfter?: number,
         excludeDeleted?: boolean,
         jwt?: string): Promise<PaginatedResult<T>> {
 
@@ -179,8 +179,8 @@ class PersistentChatClient implements ChatClient {
             params.append('page', page.toString());
         }
         
-        if (updatedAfter !== undefined) {
-            params.append('updatedAfter', updatedAfter.toString());
+        if (createdAfter !== undefined) {
+            params.append('createdAfter', createdAfter.toString());
         }
 
         if (excludeDeleted !== undefined) {

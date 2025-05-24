@@ -5,16 +5,26 @@ import {
     Transaction,
     CREATE_CHATS_TABLE_QUERY,
     CREATE_MESSAGES_TABLE_QUERY,
+    GET_CHATS_QUERY,
+    GET_CHATS_BY_USER_ID_QUERY,
+    GET_CHATS_BY_CHAT_IDS_QUERY,
     ADD_CHAT_QUERY,
     UPSERT_CHATS_QUERY,
-    GET_CHATS_QUERY,
+    COUNT_CHATS_BY_USER_ID_QUERY,
     GET_MESSAGES_QUERY,
     ADD_MESSAGE_QUERY,
+    UPSERT_MESSAGES_QUERY,
     DELETE_CHAT_QUERY,
+    CLEAR_DELETED_CHATS_QUERY,
     RENAME_CHAT_QUERY,
-    CLEAR_CHAT_QUERY
+    CLEAR_CHAT_QUERY,
+    CLEAR_MESSAGE_QUERY,
+    UPDATE_TABLE_TIMESTAMP_QUERY,
+    GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY,
+    MARK_CHAT_AS_DELETED_QUERY,
+    DELETE_MESSAGES_BY_CHAT_ID_QUERY
 } from "@/storage/queries";
-import { Chat } from "@/models/storage/dto";
+import { Chat, Message } from "@/models/storage/dto";
 
 class SqlLiteCachedChatsClient implements CachedChatsClient {
     private db: SqlLiteClient;
@@ -46,6 +56,10 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
 
     async getAllAsync<T>(query: string, params: any[] = []): Promise<T[]> {
         return await this.db.getAllAsync<T>(query, params);
+    };
+
+    async getFirstAsync<T>(query: string, params: any[] = []): Promise<T | null> {
+        return await this.db.getFirstAsync<T>(query, params);
     };
 
     async beginTransaction(): Promise<void> {
@@ -122,18 +136,96 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         return Math.max(-1, ...Array.from(this.migrations.keys())) + 1;
     }
 
+    async getChats<T>(excludeDeleted: boolean = true): Promise<T[]> {
+        try {
+            return await this.getAllAsync(GET_CHATS_QUERY(excludeDeleted));
+        } catch (error) {
+            console.error("Error fetching chats:", error);
+            throw error;
+        }
+    };
+
+    async countChatsByUserId(userId: string, updatedAfter: number = -1, excludeDeleted: boolean = false): Promise<number> {
+        try {
+            const result: any = await this.getFirstAsync(COUNT_CHATS_BY_USER_ID_QUERY(excludeDeleted), [userId, updatedAfter]);
+            return result?.total || 0;
+        } catch (error) {
+            console.error("Error counting chats by user ID:", error);
+            throw error;
+        }
+    };
+
+    async getChatsByUserId(
+        userId: string, 
+        updatedAfter: number = -1, 
+        limit: number = 20, 
+        page: number = 0, 
+        excludeDeleted: boolean = false): Promise<Chat[]> {
+        const offset = page * limit;
+        try {
+            const result = await this.getAllAsync(GET_CHATS_BY_USER_ID_QUERY(excludeDeleted), [
+                userId,
+                updatedAfter,
+                limit,
+                offset,
+            ]);
+            return result.map((chat: any) => {
+                const chatObject: any = {
+                    chatId: chat.id,
+                    userId: chat.user_id,
+                    title: chat.title,
+                    createdAt: chat.created_at,
+                    updatedAt: chat.updated_at,
+                };
+
+                if (chat.deleted_at) {
+                    chatObject.deletedAt = chat.deleted_at;
+                }
+
+                return chatObject as Chat;
+            });
+        } catch (error) {
+            console.error("Error fetching chats by user ID:", error);
+            throw error;
+        }
+    }
+
+    async getChatsByChatIds(chatIds: string[]): Promise<Chat[]> {
+        if (!chatIds || chatIds.length === 0) {
+            return [];
+        }
+        try {
+            const result = await this.getAllAsync(GET_CHATS_BY_CHAT_IDS_QUERY(chatIds), chatIds);
+            return result.map((chat: any) => {
+                return {
+                    chatId: chat.id,
+                    userId: chat.user_id,
+                    title: chat.title,
+                    createdAt: chat.created_at,
+                    updatedAt: chat.updated_at,
+                    deletedAt: chat.deleted_at
+                } as Chat;
+            });
+        } catch (error) {
+            console.error("Error fetching chats by chat IDs:", error);
+            throw error;
+        }
+    }
+
     async addChat(
         chatId: string,
         userId: string, 
         title: string, 
         updateTimestamp?: number, 
         deletedTimestamp?: number): Promise<SQLiteRunResult> {
+        const now = Date.now();
         try {
             return await this.runAsync(ADD_CHAT_QUERY, [
                 chatId, 
                 userId, 
-                title, 
-                updateTimestamp || null, 
+                title,
+                now,
+                updateTimestamp || now, 
                 deletedTimestamp || null]);
         } catch (error) {
             console.error("Error adding chat:", error);
@@ -145,35 +237,38 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         if (!chats || chats.length === 0) {
             return;
         }
+        const now = Date.now();
         try {
             const query = UPSERT_CHATS_QUERY(chats.length);
             const params = chats.flatMap(chat => [
                 chat.chatId,
                 chat.userId,
                 chat.title,
-                chat.createdAt || null,
-                chat.updatedAt || Date.now(),
+                chat.createdAt || now,
+                chat.updatedAt || now,
                 chat.deletedAt || null
             ]);
             await this.runAsync(query, params);
         } catch (error) {
-            console.error("Error adding chats:", error);
+            console.error("Error upserting chats:", error);
             throw error;
         }
     };
 
-    async getChats<T>(): Promise<T[]> {
+    async getMessages(chatId: string): Promise<Message[]> {
         try {
-            return await this.getAllAsync(GET_CHATS_QUERY);
-        } catch (error) {
-            console.error("Error fetching chats:", error);
-            throw error;
-        }
-    };
-
-    async getMessages<T>(chatId: string): Promise<T[]> {
-        try {
-            return await this.getAllAsync(GET_MESSAGES_QUERY, [chatId]);
+            const result = await this.getAllAsync(GET_MESSAGES_QUERY, [chatId]);
+            return result.map((message: any) => {
+                return {
+                    messageId: message.id,
+                    chatId: message.chat_id,
+                    content: message.content,
+                    role: message.role,
+                    createdAt: message.created_at,
+                    imageUrl: message.image_url,
+                    prompt: message.prompt
+                } as Message;
+            });
         } catch (error) {
             console.error("Error fetching messages:", error);
             throw error;
@@ -181,18 +276,85 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
     };
 
     async addMessage(
+        messageId: string,
         chatId: string, 
         content: string, 
         role: string, 
         imageUrl?: string, 
-        prompt?: string): Promise<SQLiteRunResult> {
+        prompt?: string,
+        isSynced: boolean = false
+    ): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(ADD_MESSAGE_QUERY, [chatId, content, role, imageUrl, prompt]);
+            const now = Date.now();
+            return await this.runAsync(ADD_MESSAGE_QUERY, [
+                messageId, 
+                chatId, 
+                content, 
+                role, 
+                imageUrl || null, 
+                prompt || null,
+                now,
+                isSynced]);
         } catch (error) {
             console.error("Error adding message:", error);
             throw error;
         }
-    }
+    };
+
+    async upsertMessages(messages: Message[], isSynced: boolean = false): Promise<void> {
+        if (!messages || messages.length === 0) {
+            return;
+        }
+
+        try {
+            const now = Date.now();
+            const query = UPSERT_MESSAGES_QUERY(messages.length);
+            const params = messages.flatMap(message => [
+                message.messageId,
+                message.chatId,
+                message.content,
+                message.role,
+                message.imageUrl || null,
+                message.prompt || null,
+                message.createdAt || now,
+                isSynced
+            ]);
+            await this.runAsync(query, params);
+        } catch (error) {
+            console.error("Error adding messages:", error);
+            throw error;
+        }
+    };
+
+    // async countUnsyncedMessagesByUserId(userId: string): Promise<number> {
+
+
+    async getAndMarkUnsyncedMessagesByUserId(userId: string, limit: number = 20): Promise<Message[]> {
+        try {
+            if (limit <= 0) {
+                const errorMsg = `Invalid limit: ${limit}. Limit must be greater than 0.`;
+                console.error(errorMsg);
+                throw new Error(errorMsg);
+            }
+            const result = await this.getAllAsync(GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY, [
+                userId,
+                limit]);
+            return result.map((message: any) => {
+                return {
+                    messageId: message.id,
+                    chatId: message.chat_id,
+                    content: message.content,
+                    role: message.role,
+                    createdAt: message.created_at,
+                    imageUrl: message.image_url,
+                    prompt: message.prompt
+                } as Message;
+            });
+        } catch (error) {
+            console.error("Error fetching unsynced messages by user ID:", error);
+            throw error;
+        }
+    };
 
     async deleteChat(chatId: string): Promise<SQLiteRunResult> {
         try {
@@ -201,16 +363,42 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             console.error("Error deleting chat:", error);
             throw error;
         }
-    }
+    };
+
+    async markChatAsDeleted(chatId: string): Promise<SQLiteRunResult> {
+        try {
+            const now = Date.now();
+            await this.beginTransaction();
+
+            await this.runAsync(MARK_CHAT_AS_DELETED_QUERY, [now, now, chatId]);
+            await this.runAsync(DELETE_MESSAGES_BY_CHAT_ID_QUERY, [chatId]);
+            await this.commitTransaction();
+            return { changes: 1, lastInsertRowId: 0 };
+        } catch (error) {
+            await this.rollbackTransaction();
+            console.error("Error marking chat as deleted:", error);
+            throw error;
+        }
+    };
+
+    async clearDeletedChats(): Promise<void> {
+        try {
+            return await this.execAsync(CLEAR_DELETED_CHATS_QUERY);
+        } catch (error) {
+            console.error("Error clearing deleted chats:", error);
+            throw error;
+        }
+    };
 
     async renameChat(chatId: string, title: string): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(RENAME_CHAT_QUERY, [title, chatId]);
+            const now = Date.now();
+            return await this.runAsync(RENAME_CHAT_QUERY, [title, now, chatId]);
         } catch (error) {
             console.error("Error renaming chat:", error);
             throw error;
         }
-    }
+    };
 
     async clearChat(): Promise<void> {
         try {
@@ -219,16 +407,26 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
             console.error("Error clearing chat:", error);
             throw error;
         }
-    }
+    };
+
+    async clearMessage(): Promise<void> {
+        try {
+            return await this.execAsync(CLEAR_MESSAGE_QUERY);
+        } catch (error) {
+            console.error("Error clearing messages:", error);
+            throw error;
+        }
+    };
 
     async updateTableTimestamp(tableName: string, id: string): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(`UPDATE ${tableName} SET updated_at = unixepoch() WHERE id = ?`, [id]);
+            const now = Date.now();
+            return await this.runAsync(UPDATE_TABLE_TIMESTAMP_QUERY(tableName), [now, id]);
         } catch (error) {
             console.error("Error updating table timestamp:", error);
             throw error;
         }
-    }
+    };
 };
 
 export {
