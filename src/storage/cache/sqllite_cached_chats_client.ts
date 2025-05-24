@@ -7,6 +7,7 @@ import {
     CREATE_MESSAGES_TABLE_QUERY,
     GET_CHATS_QUERY,
     GET_CHATS_BY_USER_ID_QUERY,
+    GET_CHATS_BY_CHAT_IDS_QUERY,
     ADD_CHAT_QUERY,
     UPSERT_CHATS_QUERY,
     COUNT_CHATS_BY_USER_ID_QUERY,
@@ -186,6 +187,27 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     }
 
+    async getChatsByChatIds(chatIds: string[]): Promise<Chat[]> {
+        if (!chatIds || chatIds.length === 0) {
+            return [];
+        }
+        try {
+            const result = await this.getAllAsync(GET_CHATS_BY_CHAT_IDS_QUERY(chatIds), chatIds);
+            return result.map((chat: any) => {
+                return {
+                    chatId: chat.id,
+                    userId: chat.user_id,
+                    title: chat.title,
+                    createdAt: chat.created_at,
+                    updatedAt: chat.updated_at,
+                    deletedAt: chat.deleted_at
+                } as Chat;
+            });
+        } catch (error) {
+            console.error("Error fetching chats by chat IDs:", error);
+            throw error;
+        }
+    }
 
     async addChat(
         chatId: string,

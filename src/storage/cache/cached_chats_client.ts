@@ -18,6 +18,7 @@ interface CachedChatsClient {
         limit?: number, 
         page?: number, 
         excludeDeleted?: boolean): Promise<Chat[]>;
+    getChatsByChatIds(chatIds: string[]): Promise<Chat[]>;
     addChat(
         chatId: string,
         userId: string, 

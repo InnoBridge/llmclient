@@ -103,6 +103,13 @@ const getChatsByUserId = async (
     } as PaginatedResult<Chat>;
 };
 
+const getChatsByChatIds = async (chatIds: string[]): Promise<Chat[]> => {
+    if (!isCacheClientSet()) {
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
+    }
+    return await cacheClient?.getChatsByChatIds(chatIds) as Chat[];
+};
+
 const addChat = async (
     chatId: string,
     userId: string, 
@@ -218,6 +225,7 @@ export {
     rollbackTransaction,
     getChats,
     getChatsByUserId,
+    getChatsByChatIds,
     addChat,
     upsertChats,
     getMessages,

@@ -52,6 +52,15 @@ const GET_CHATS_BY_USER_ID_QUERY = (excludeDeleted: boolean): string =>
    ORDER BY lastActivity DESC, c.id DESC
    LIMIT ? OFFSET ?`;
 
+const GET_CHATS_BY_CHAT_IDS_QUERY = (chatIds: string[]): string => {
+  const placeholders = chatIds.map(() => '?').join(',');
+  return `SELECT c.*, 
+          (SELECT COUNT(*) FROM messages WHERE chat_id = c.id) as messageCount,
+          (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as lastActivity
+   FROM chats c
+   WHERE c.id IN (${placeholders})`;
+};
+
 const ADD_CHAT_QUERY = 
     'INSERT INTO chats (id, user_id, title, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?)';
     
@@ -130,6 +139,7 @@ export {
     GET_CHATS_QUERY,
     COUNT_CHATS_BY_USER_ID_QUERY,
     GET_CHATS_BY_USER_ID_QUERY,
+    GET_CHATS_BY_CHAT_IDS_QUERY,
     ADD_CHAT_QUERY,
     UPSERT_CHATS_QUERY,
     GET_MESSAGES_QUERY,
