@@ -55,14 +55,14 @@ const getMessagesByUserId = async <T>(
     userId: string, 
     limit?: number, 
     page?: number, 
-    updatedAfter?: number,
+    createdAfter?: number,
     excludeDeleted?: boolean,
     jwt?: string
 ): Promise<PaginatedResult<T>> => {    
     if (!chatClient) {
         throw new Error("Chat client not initialized. Call createChatClient first.");
     }
-    return await chatClient.getMessagesByUserId(userId, limit, page, updatedAfter, excludeDeleted, jwt);
+    return await chatClient.getMessagesByUserId(userId, limit, page, createdAfter, excludeDeleted, jwt);
 };
 
 const addMessage = async (payload: Message, jwt?: string): Promise<void> => {

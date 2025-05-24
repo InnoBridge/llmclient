@@ -20,7 +20,7 @@ interface ChatClient {
         userId: string, 
         limit?: number, 
         page?: number, 
-        updatedAfter?: number,
+        createdAfter?: number,
         excludeDeleted?: boolean,
         jwt?: string): Promise<PaginatedResult<T>>;
     addMessage(payload: Message, jwt?: string): Promise<void>;
