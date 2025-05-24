@@ -15,6 +15,7 @@ import {
     ADD_MESSAGE_QUERY,
     UPSERT_MESSAGES_QUERY,
     DELETE_CHAT_QUERY,
+    CLEAR_DELETED_CHATS_QUERY,
     RENAME_CHAT_QUERY,
     CLEAR_CHAT_QUERY,
     CLEAR_MESSAGE_QUERY,
@@ -376,6 +377,15 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         } catch (error) {
             await this.rollbackTransaction();
             console.error("Error marking chat as deleted:", error);
+            throw error;
+        }
+    };
+
+    async clearDeletedChats(): Promise<void> {
+        try {
+            return await this.execAsync(CLEAR_DELETED_CHATS_QUERY);
+        } catch (error) {
+            console.error("Error clearing deleted chats:", error);
             throw error;
         }
     };

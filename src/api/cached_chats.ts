@@ -191,6 +191,13 @@ const markChatAsDeleted = async (chatId: string): Promise<SQLiteRunResult> => {
     return await cacheClient?.markChatAsDeleted(chatId) as SQLiteRunResult;
 };
 
+const clearDeletedChats = async (): Promise<void> => {
+    if (!isCacheClientSet()) {
+        throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
+    }
+    return await cacheClient?.clearDeletedChats();
+};
+
 const renameChat = async (chatId: string, title: string): Promise<SQLiteRunResult> => {
     if (!isCacheClientSet()) {
         throw new Error("Chat cache not initialized. Call initializeChatsCache first.");
@@ -241,6 +248,7 @@ export {
     upsertMessages,
     deleteChat,
     markChatAsDeleted,
+    clearDeletedChats,
     renameChat,
     clearChat,
     clearMessage

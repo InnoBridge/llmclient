@@ -43,6 +43,7 @@ interface CachedChatsClient {
     upsertMessages(messages: Message[], isSynced?: boolean): Promise<void>;
     deleteChat(chatId: string): Promise<SQLiteRunResult>;
     markChatAsDeleted(chatId: string): Promise<SQLiteRunResult>;
+    clearDeletedChats(): Promise<void>;
     renameChat(chatId: string, title: string): Promise<SQLiteRunResult>;
     clearChat(): Promise<void>;
     clearMessage(): Promise<void>;
