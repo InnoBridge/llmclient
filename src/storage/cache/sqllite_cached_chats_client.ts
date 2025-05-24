@@ -19,7 +19,9 @@ import {
     CLEAR_CHAT_QUERY,
     CLEAR_MESSAGE_QUERY,
     UPDATE_TABLE_TIMESTAMP_QUERY,
-    GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY
+    GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY,
+    MARK_CHAT_AS_DELETED_QUERY,
+    DELETE_MESSAGES_BY_CHAT_ID_QUERY
 } from "@/storage/queries";
 import { Chat, Message } from "@/models/storage/dto";
 
@@ -133,9 +135,9 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         return Math.max(-1, ...Array.from(this.migrations.keys())) + 1;
     }
 
-    async getChats<T>(): Promise<T[]> {
+    async getChats<T>(excludeDeleted: boolean = true): Promise<T[]> {
         try {
-            return await this.getAllAsync(GET_CHATS_QUERY);
+            return await this.getAllAsync(GET_CHATS_QUERY(excludeDeleted));
         } catch (error) {
             console.error("Error fetching chats:", error);
             throw error;
@@ -362,9 +364,26 @@ class SqlLiteCachedChatsClient implements CachedChatsClient {
         }
     };
 
+    async markChatAsDeleted(chatId: string): Promise<SQLiteRunResult> {
+        try {
+            const now = Date.now();
+            await this.beginTransaction();
+
+            await this.runAsync(MARK_CHAT_AS_DELETED_QUERY, [now, now, chatId]);
+            await this.runAsync(DELETE_MESSAGES_BY_CHAT_ID_QUERY, [chatId]);
+            await this.commitTransaction();
+            return { changes: 1, lastInsertRowId: 0 };
+        } catch (error) {
+            await this.rollbackTransaction();
+            console.error("Error marking chat as deleted:", error);
+            throw error;
+        }
+    };
+
     async renameChat(chatId: string, title: string): Promise<SQLiteRunResult> {
         try {
-            return await this.runAsync(RENAME_CHAT_QUERY, [title, chatId]);
+            const now = Date.now();
+            return await this.runAsync(RENAME_CHAT_QUERY, [title, now, chatId]);
         } catch (error) {
             console.error("Error renaming chat:", error);
             throw error;

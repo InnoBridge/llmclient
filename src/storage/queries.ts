@@ -11,7 +11,7 @@ const CREATE_CHATS_TABLE_QUERY =
         title TEXT NOT NULL,
         created_at INTEGER NOT NULL,     
         updated_at INTEGER NOT NULL,
-        deleted_at  INTEGER DEFAULT NULL
+        deleted_at INTEGER DEFAULT NULL
     );`;
 
 const CREATE_MESSAGES_TABLE_QUERY =
@@ -27,12 +27,13 @@ const CREATE_MESSAGES_TABLE_QUERY =
         FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
     );`;
 
-const GET_CHATS_QUERY = 
+const GET_CHATS_QUERY = (excludeDeleted: boolean): string => 
     `SELECT c.*, 
-                  (SELECT COUNT(*) FROM messages WHERE chat_id = c.id) as messageCount,
-                  (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as lastActivity
-            FROM chats c
-            ORDER BY lastActivity DESC, c.id DESC`;
+            (SELECT COUNT(*) FROM messages WHERE chat_id = c.id) as messageCount,
+            (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as lastActivity
+     FROM chats c
+     ${excludeDeleted ? 'WHERE c.deleted_at IS NULL' : ''}
+     ORDER BY lastActivity DESC, c.id DESC`;
 
 const COUNT_CHATS_BY_USER_ID_QUERY = (excludeDeleted: boolean): string =>
   `SELECT COUNT(*) as total 
@@ -118,8 +119,14 @@ const UPSERT_MESSAGES_QUERY = (messageCount: number): string => {
 const DELETE_CHAT_QUERY =
     'DELETE FROM chats WHERE id = ?';
 
+const MARK_CHAT_AS_DELETED_QUERY = 
+    'UPDATE chats SET deleted_at = ?, updated_at = ? WHERE id = ?';
+
+const DELETE_MESSAGES_BY_CHAT_ID_QUERY = 
+    'DELETE FROM messages WHERE chat_id = ?';
+
 const RENAME_CHAT_QUERY =
-    'UPDATE chats SET title = ? WHERE id = ?';
+    'UPDATE chats SET title = ?, updated_at = ? WHERE id = ?';
 
 const CLEAR_CHAT_QUERY =
     `DELETE FROM chats;
@@ -146,6 +153,8 @@ export {
     ADD_MESSAGE_QUERY,
     UPSERT_MESSAGES_QUERY,
     DELETE_CHAT_QUERY,
+    MARK_CHAT_AS_DELETED_QUERY,
+    DELETE_MESSAGES_BY_CHAT_ID_QUERY,
     RENAME_CHAT_QUERY,
     GET_AND_MARK_UNSYNCED_MESSAGES_BY_USER_ID_QUERY,
     CLEAR_CHAT_QUERY,

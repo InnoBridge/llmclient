@@ -10,7 +10,7 @@ interface CachedChatsClient {
     rollbackTransaction(): Promise<void>;
     initializeCache(): Promise<void>;
     registerMigration(version: number, migration: () => Promise<void>): void;
-    getChats<T>(): Promise<T[]>;
+    getChats<T>(excludeDeleted?: boolean): Promise<T[]>;
     countChatsByUserId(userId: string, updatedAfter?: number): Promise<number>;
     getChatsByUserId(
         userId: string, 
@@ -42,6 +42,7 @@ interface CachedChatsClient {
         page?: number): Promise<Message[]>;
     upsertMessages(messages: Message[], isSynced?: boolean): Promise<void>;
     deleteChat(chatId: string): Promise<SQLiteRunResult>;
+    markChatAsDeleted(chatId: string): Promise<SQLiteRunResult>;
     renameChat(chatId: string, title: string): Promise<SQLiteRunResult>;
     clearChat(): Promise<void>;
     clearMessage(): Promise<void>;
